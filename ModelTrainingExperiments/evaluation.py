@@ -120,3 +120,19 @@ def compute_per_class_accuracy(model, dataset, class_names):
         results[name] = np.mean(y_pred[mask] == idx)
 
     return results
+
+def get_best_epoch_metrics(history_dict):
+    val_losses = np.array(history_dict["val_loss"])
+    val_accs = np.array(history_dict["val_accuracy"])
+    train_losses = np.array(history_dict["loss"])
+    train_accs = np.array(history_dict["accuracy"])
+
+    best_epoch_idx = np.argmin(val_losses) #we choose best epoch based on min validation loss
+
+    return {
+        "epoch": int(best_epoch_idx + 1),
+        "val_loss": float(val_losses[best_epoch_idx]),
+        "val_accuracy": float(val_accs[best_epoch_idx]),
+        "train_loss": float(train_losses[best_epoch_idx]),
+        "train_accuracy": float(train_accs[best_epoch_idx])
+    }
