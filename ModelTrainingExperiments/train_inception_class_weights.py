@@ -2,31 +2,39 @@ import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.applications.inception_v3 import InceptionV3, preprocess_input
 from tensorflow.keras.layers import GlobalAveragePooling2D, Dense, Dropout, RandomFlip, RandomRotation, RandomZoom, RandomTranslation
-from tensorflow.keras.utils import image_dataset_from_directory
+from tensorflow.keras.utils import image_dataset_from_directory, set_random_seed
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from sklearn.utils.class_weight import compute_class_weight
 import pickle
 import numpy as np
+import evaluation as eval
 
 train_dir = "" #path to directory containing images from training dataset
 val_dir = "" #path to directory containing images from validation dataset
 test_dir = "" #path to directory containing images from test dataset
 
-BATCH_SIZE = 8
+BATCH_SIZE = 20
 IMG_SIZE = (299, 299)
-INITIAL_EPOCHS = 10
+INITIAL_EPOCHS = 15
+
 SAVE_MODEL = False
 EVALUATE_FINAL_MODEL = False
 
+RANDOM_SEED = 27
+
 BEST_MODEL_SAVE_PATH = "inception_best_model_before_ft.keras"
 HISTORY_SAVE_PATH = "inception_train_history_before_ft.pkl"
+
+set_random_seed(RANDOM_SEED)
 
 train_dataset = image_dataset_from_directory(
     train_dir,
     labels='inferred',
     label_mode='int',
     batch_size=BATCH_SIZE,
-    image_size=IMG_SIZE
+    image_size=IMG_SIZE,
+    shuffle=True,
+    seed=RANDOM_SEED
 )
 
 val_dataset = image_dataset_from_directory(
@@ -34,7 +42,9 @@ val_dataset = image_dataset_from_directory(
     labels='inferred',
     label_mode='int',
     batch_size=BATCH_SIZE,
-    image_size=IMG_SIZE
+    image_size=IMG_SIZE,
+    shuffle=True,
+    seed=RANDOM_SEED
 )  
 
 test_dataset = image_dataset_from_directory(
@@ -59,9 +69,9 @@ print("Class weights:", class_weights)
 
 data_augmentation = keras.Sequential([
     RandomFlip("horizontal"),
-    RandomRotation(0.1),
-    RandomZoom(0.1),
-    RandomTranslation(0.1, 0.1)],
+    RandomRotation(0.03),
+    RandomZoom(0.02),
+    RandomTranslation(0.01, 0.01)],
     name="data_augmentation"
 )
 
@@ -80,9 +90,8 @@ x = data_augmentation(inputs)
 x = preprocess_input(x)
 x = base_model(x, training=False)
 x = GlobalAveragePooling2D()(x)
-# x = BatchNormalization()(x)
-x = Dense(1024, activation='relu')(x)
-x = Dropout(0.5)(x)
+x = Dense(512, activation='relu')(x)
+x = Dropout(0.3)(x)
 outputs = Dense(classes_count, activation="softmax")(x) 
 model = keras.Model(inputs, outputs)
 
@@ -90,35 +99,41 @@ model.compile(optimizer=keras.optimizers.Adam(),
               loss=keras.losses.SparseCategoricalCrossentropy(),
                 metrics=['accuracy'])
 if SAVE_MODEL:
-    history = model.fit(train_dataset,
-                        epochs=INITIAL_EPOCHS,
-                        validation_data=val_dataset,
-                        verbose=1,
-                        class_weight=class_weights,
-                        callbacks=[EarlyStopping(monitor="val_loss",patience=5, restore_best_weights=True),
-                                ModelCheckpoint(BEST_MODEL_SAVE_PATH, save_best_only=True, monitor="val_loss")])
-    with open(HISTORY_SAVE_PATH, 'wb') as file:
-        pickle.dump(history.history, file)
+    callbacks = [EarlyStopping(monitor="val_loss",patience=5, restore_best_weights=True),
+                ModelCheckpoint(BEST_MODEL_SAVE_PATH, save_best_only=True, monitor="val_loss")]
 else:
-    history = model.fit(train_dataset,
-                        epochs=INITIAL_EPOCHS,
-                        validation_data=val_dataset,
-                        verbose=1,
-                        class_weight=class_weights,
-                        callbacks=[EarlyStopping(monitor="val_loss",patience=5, restore_best_weights=True)])
+    callbacks = [EarlyStopping(monitor="val_loss",patience=5, restore_best_weights=True)]
 
+history = model.fit(train_dataset,
+                    epochs=INITIAL_EPOCHS,
+                    validation_data=val_dataset,
+                    verbose=1,
+                    class_weight=class_weights,
+                    callbacks=callbacks)
 
-# Plot training curves
+with open(HISTORY_SAVE_PATH, 'wb') as file:
+    pickle.dump(history.history, file)
+
+# Training curves
 eval.plot_training_history(
     history.history,
     save_path="training_loss_acc.png"
 )
 
+metrics = eval.get_best_epoch_metrics(history.history)
+
+print("\n===== MODEL METRICS (model selected based on min val loss) =====")
+print(f"Epoch: {metrics['epoch']}")
+print(f"Validation loss: {metrics['val_loss']:.4f}")
+print(f"Validation accuracy: {metrics['val_accuracy']:.4f}")
+print(f"Training loss: {metrics['train_loss']:.4f}")
+print(f"Training accuracy: {metrics['train_accuracy']:.4f}")
+print("=================================================================")
+
 if EVALUATE_FINAL_MODEL:
     test_loss, test_acc = model.evaluate(test_dataset)
     print(f"\nTEST RESULTS:\nTest accuracy: {test_acc:.4f}\nTest loss: {test_loss:.4f}")
 
-    # Get class names (label -> class mapping)
     class_names = train_dataset.class_names
 
     # Confusion matrix

@@ -15,7 +15,7 @@ test_dir = "" #path to directory containing images from test dataset
 
 BATCH_SIZE = 20
 IMG_SIZE = (299, 299)
-INITIAL_EPOCHS = 15
+INITIAL_EPOCHS = 12
 FINE_TUNE_EPOCHS = 10
 FT_LEARNING_RATE = 1e-5
 
@@ -65,7 +65,6 @@ class_weights_array = compute_class_weight(
 )
 
 class_weights = dict(enumerate(class_weights_array))
-print("Class weights:", class_weights)
 
 data_augmentation = keras.Sequential([
     RandomFlip("horizontal"),
@@ -98,23 +97,21 @@ model = keras.Model(inputs, outputs)
 model.compile(optimizer=keras.optimizers.Adam(),
               loss=keras.losses.SparseCategoricalCrossentropy(),
                 metrics=['accuracy'])
+
+callbacks=[EarlyStopping(monitor="val_loss",patience=5, restore_best_weights=True)]
 if SAVE_MODEL:
-    history = model.fit(train_dataset,
-                        epochs=INITIAL_EPOCHS,
-                        validation_data=val_dataset,
-                        verbose=1,
-                        class_weight=class_weights,
-                        callbacks=[EarlyStopping(monitor="val_loss",patience=5, restore_best_weights=True),
-                                ModelCheckpoint(BEST_MODEL_SAVE_PATH, save_best_only=True, monitor="val_loss")])
-    with open(HISTORY_SAVE_PATH, 'wb') as file:
-        pickle.dump(history.history, file)
-else:
-    history = model.fit(train_dataset,
-                        epochs=INITIAL_EPOCHS,
-                        validation_data=val_dataset,
-                        verbose=1,
-                        class_weight=class_weights,
-                        callbacks=[EarlyStopping(monitor="val_loss",patience=5, restore_best_weights=True)])
+    callbacks.append(ModelCheckpoint(BEST_MODEL_SAVE_PATH, save_best_only=True, monitor="val_loss"))
+
+
+history = model.fit(train_dataset,
+                    epochs=INITIAL_EPOCHS,
+                    validation_data=val_dataset,
+                    verbose=1,
+                    class_weight=class_weights,
+                    callbacks=callbacks)
+
+with open(HISTORY_SAVE_PATH, 'wb') as file:
+    pickle.dump(history.history, file)
 
 #unfreeze the base model
 base_model.trainable = True
@@ -125,35 +122,27 @@ for layer in base_model.layers:
         layer.trainable = False
 
 #fine-tune 
-model.compile(optimizer=keras.optimizers.Adam(learning_rate=FT_LEARNING_RATE), #very small learning rate
+model.compile(optimizer=keras.optimizers.Adam(learning_rate=FT_LEARNING_RATE), 
               loss=keras.losses.SparseCategoricalCrossentropy(),
               metrics=['accuracy'])
 
+callbacks=[EarlyStopping(monitor="val_loss",patience=5, restore_best_weights=True)]
 if SAVE_MODEL:
-    history_ft = model.fit(train_dataset,
-                        epochs=INITIAL_EPOCHS+FINE_TUNE_EPOCHS,
-                        initial_epoch=history.epoch[-1]+1,
-                        validation_data=val_dataset,
-                        verbose=1,
-                        class_weight=class_weights,
-                        callbacks=[EarlyStopping(monitor="val_loss",patience=5,restore_best_weights=True), 
-                        ModelCheckpoint(BEST_MODEL_FT_SAVE_PATH, save_best_only=True, monitor="val_loss")])
-
-    with open(HISTORY_FT_SAVE_PATH, 'wb') as file:
-        pickle.dump(history_ft.history, file)
-else:
-    history_ft = model.fit(train_dataset,
-            epochs=INITIAL_EPOCHS+FINE_TUNE_EPOCHS,
-            initial_epoch=history.epoch[-1]+1,
-            validation_data=val_dataset,
-            verbose=1,
-            class_weight=class_weights,
-            callbacks=[EarlyStopping(monitor="val_loss",patience=5,restore_best_weights=True)])
+    callbacks.append(ModelCheckpoint(BEST_MODEL_FT_SAVE_PATH, save_best_only=True, monitor="val_loss"))
 
 
+history_ft = model.fit(train_dataset,
+                    epochs=INITIAL_EPOCHS+FINE_TUNE_EPOCHS,
+                    initial_epoch=history.epoch[-1]+1,
+                    validation_data=val_dataset,
+                    verbose=1,
+                    class_weight=class_weights,
+                    callbacks=callbacks)
 
-# Plot training curves
-# with fine-tuning, we have to combine the histories into one for visualization:
+with open(HISTORY_FT_SAVE_PATH, 'wb') as file:
+    pickle.dump(history_ft.history, file)
+
+#Training curves
 combined_history = {}
 for k in history.history.keys():
     combined_history[k] = history.history[k] + history_ft.history[k]
@@ -162,11 +151,20 @@ eval.plot_training_history(
     save_path="training_loss_acc.png"
 )
 
+metrics = eval.get_best_epoch_metrics(combined_history)
+
+print("\n===== MODEL METRICS (model selected based on min val loss) =====")
+print(f"Epoch: {metrics['epoch']}")
+print(f"Validation loss: {metrics['val_loss']:.4f}")
+print(f"Validation accuracy: {metrics['val_accuracy']:.4f}")
+print(f"Training loss: {metrics['train_loss']:.4f}")
+print(f"Training accuracy: {metrics['train_accuracy']:.4f}")
+print("=================================================================")
+
 if EVALUATE_FINAL_MODEL:
     test_loss, test_acc = model.evaluate(test_dataset)
     print(f"\nTEST RESULTS:\nTest accuracy: {test_acc:.4f}\nTest loss: {test_loss:.4f}")
 
-    # Get class names (label -> class mapping)
     class_names = train_dataset.class_names
 
     # Confusion matrix

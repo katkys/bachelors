@@ -15,7 +15,7 @@ BATCH_SIZE = 20
 IMG_SIZE = (299, 299)
 INITIAL_EPOCHS = 15
 
-SAVE_MODEL = True
+SAVE_MODEL = False
 EVALUATE_FINAL_MODEL = False
 
 RANDOM_SEED = 27
@@ -78,41 +78,48 @@ x = data_augmentation(inputs)
 x = preprocess_input(x)
 x = base_model(x, training=False)
 x = GlobalAveragePooling2D()(x)
-x = Dense(1024, activation='relu')(x)
-x = Dropout(0.4)(x)
+x = Dense(512, activation='relu')(x)
+x = Dropout(0.3)(x)
 outputs = Dense(classes_count, activation="softmax")(x) 
 model = keras.Model(inputs, outputs)
 
 model.compile(optimizer=keras.optimizers.Adam(),
               loss=keras.losses.SparseCategoricalCrossentropy(),
                 metrics=['accuracy'])
-if SAVE_MODEL:
-    history = model.fit(train_dataset,
-                        epochs=INITIAL_EPOCHS,
-                        validation_data=val_dataset,
-                        verbose=1,
-                        callbacks=[EarlyStopping(monitor="val_loss",patience=5, restore_best_weights=True),
-                                ModelCheckpoint(BEST_MODEL_SAVE_PATH, save_best_only=True, monitor="val_loss")])
-    with open(HISTORY_SAVE_PATH, 'wb') as file:
-        pickle.dump(history.history, file)
-else:
-    history = model.fit(train_dataset,
-                        epochs=INITIAL_EPOCHS,
-                        validation_data=val_dataset,
-                        verbose=1,
-                        callbacks=[EarlyStopping(monitor="val_loss",patience=5, restore_best_weights=True)])
 
-# Plot training curves
+callbacks = [EarlyStopping(monitor="val_loss",patience=5, restore_best_weights=True)]
+if SAVE_MODEL:
+    callbacks.append(ModelCheckpoint(BEST_MODEL_SAVE_PATH, save_best_only=True, monitor="val_loss"))  
+    
+history = model.fit(train_dataset,
+                    epochs=INITIAL_EPOCHS,
+                    validation_data=val_dataset,
+                    verbose=1,
+                    callbacks=callbacks)
+    
+with open(HISTORY_SAVE_PATH, 'wb') as file:
+        pickle.dump(history.history, file)
+
+#Training curves
 eval.plot_training_history(
     history.history,
     save_path="training_loss_acc.png"
 )
 
+metrics = eval.get_best_epoch_metrics(history.history)
+
+print("\n===== MODEL METRICS (model selected based on min val loss) =====")
+print(f"Epoch: {metrics['epoch']}")
+print(f"Validation loss: {metrics['val_loss']:.4f}")
+print(f"Validation accuracy: {metrics['val_accuracy']:.4f}")
+print(f"Training loss: {metrics['train_loss']:.4f}")
+print(f"Training accuracy: {metrics['train_accuracy']:.4f}")
+print("=================================================================")
+
 if EVALUATE_FINAL_MODEL:
     test_loss, test_acc = model.evaluate(test_dataset)
     print(f"\nTEST RESULTS:\nTest accuracy: {test_acc:.4f}\nTest loss: {test_loss:.4f}")
 
-    # Get class names (label -> class mapping)
     class_names = train_dataset.class_names
 
     # Confusion matrix
@@ -141,3 +148,4 @@ if EVALUATE_FINAL_MODEL:
         class_names=class_names,
         save_path="roc_curves.png"
     )
+
