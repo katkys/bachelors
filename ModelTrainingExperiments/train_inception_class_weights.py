@@ -1,3 +1,6 @@
+import os
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "2"
+
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.applications.inception_v3 import InceptionV3, preprocess_input
