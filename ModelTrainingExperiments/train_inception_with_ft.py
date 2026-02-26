@@ -151,7 +151,7 @@ print(f"Validation loss: {metrics['val_loss']:.4f}")
 print(f"Validation accuracy: {metrics['val_accuracy']:.4f}")
 print(f"Training loss: {metrics['train_loss']:.4f}")
 print(f"Training accuracy: {metrics['train_accuracy']:.4f}")
-print("=================================================================")
+print("================================================================")
 
 if EVALUATE_FINAL_MODEL:
     test_loss, test_acc = model.evaluate(test_dataset)
