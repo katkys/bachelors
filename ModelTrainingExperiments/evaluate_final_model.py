@@ -8,7 +8,7 @@ MODEL_PATH = "" # Path to saved model (.keras file)
 TEST_DATASET_DIR = "" # Path to directory containing test dataset (images organized in artist folders)
 OUTPUT_DIR = "" # Path to directory where evaluation results (metrics, confusion matrix, ROC curves) will be saved
 
-IMG_SIZE = (299, 299)  
+IMG_SIZE = (299, 299)  # for ResNet50, use (224, 224)
 BATCH_SIZE = 16
 
 os.makedirs(OUTPUT_DIR, exist_ok=True)
