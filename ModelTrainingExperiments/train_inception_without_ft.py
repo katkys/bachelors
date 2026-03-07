@@ -14,12 +14,11 @@ train_dir = "" #path to directory containing images from training dataset
 val_dir = "" #path to directory containing images from validation dataset
 test_dir = "" #path to directory containing images from test dataset
 
-BATCH_SIZE = 20
 IMG_SIZE = (299, 299)
+BATCH_SIZE = 20
 INITIAL_EPOCHS = 15
 
 SAVE_MODEL = False
-EVALUATE_FINAL_MODEL = False
 
 RANDOM_SEED = 27
 
@@ -48,14 +47,6 @@ val_dataset = image_dataset_from_directory(
     seed=RANDOM_SEED
 )  
 
-test_dataset = image_dataset_from_directory(
-    test_dir,
-    labels='inferred',
-    label_mode='int',
-    shuffle=False,
-    image_size=IMG_SIZE
-)
-
 classes_count = len(train_dataset.class_names)
 
 data_augmentation = keras.Sequential([
@@ -69,14 +60,14 @@ data_augmentation = keras.Sequential([
 #load the InceptionV3 model pre-trained on ImageNet
 base_model = InceptionV3(
     weights='imagenet',
-    input_shape=(299, 299, 3),
+    input_shape=(IMG_SIZE[0], IMG_SIZE[1], 3),
     include_top=False)
 
 #freeze the base model
 base_model.trainable = False
 
 #create a new model on top
-inputs = keras.Input(shape=(299, 299, 3))
+inputs = keras.Input(shape=(IMG_SIZE[0], IMG_SIZE[1], 3))
 x = data_augmentation(inputs)
 x = preprocess_input(x)
 x = base_model(x, training=False)
@@ -118,37 +109,4 @@ print(f"Validation accuracy: {metrics['val_accuracy']:.4f}")
 print(f"Training loss: {metrics['train_loss']:.4f}")
 print(f"Training accuracy: {metrics['train_accuracy']:.4f}")
 print("================================================================")
-
-if EVALUATE_FINAL_MODEL:
-    test_loss, test_acc = model.evaluate(test_dataset)
-    print(f"\nTEST RESULTS:\nTest accuracy: {test_acc:.4f}\nTest loss: {test_loss:.4f}")
-
-    class_names = train_dataset.class_names
-
-    # Confusion matrix
-    eval.plot_confusion_matrix(
-        model=model,
-        dataset=test_dataset,
-        class_names=class_names,
-        normalize=False,
-        save_path="confusion_matrix.png"
-    )
-
-    # Confusion matrix (normalized)
-
-    eval.plot_confusion_matrix(
-        model=model,
-        dataset=test_dataset,
-        class_names=class_names,
-        normalize=True,
-        save_path="confusion_matrix_normalized.png"
-    )
-
-    # ROC curves (one-vs-rest)
-    eval.plot_roc_curve(
-        model=model,
-        dataset=test_dataset,
-        class_names=class_names,
-        save_path="roc_curves.png"
-    )
 

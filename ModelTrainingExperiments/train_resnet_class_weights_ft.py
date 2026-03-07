@@ -16,14 +16,13 @@ train_dir = "" #path to directory containing images from training dataset
 val_dir = "" #path to directory containing images from validation dataset
 test_dir = "" #path to directory containing images from test dataset
 
-BATCH_SIZE = 16
 IMG_SIZE = (224, 224)
+BATCH_SIZE = 16
 INITIAL_EPOCHS = 10
 FINE_TUNE_EPOCHS = 10
 FT_LEARNING_RATE = 5e-6
 
 SAVE_MODEL = True
-EVALUATE_FINAL_MODEL = False
 
 RANDOM_SEED = 27
 
@@ -50,14 +49,6 @@ val_dataset = image_dataset_from_directory(
     seed=RANDOM_SEED
 )  
 
-test_dataset = image_dataset_from_directory(
-    test_dir,
-    labels='inferred',
-    label_mode='int',
-    shuffle=False,
-    image_size=IMG_SIZE
-)
-
 classes_count = len(train_dataset.class_names)
 
 y_train = np.concatenate([y.numpy() for x,y in train_dataset], axis=0)
@@ -68,7 +59,6 @@ class_weights_array = compute_class_weight(
 )
 
 class_weights = dict(enumerate(class_weights_array))
-# print("Class weights:", class_weights)
 
 data_augmentation = keras.Sequential([
     RandomFlip("horizontal"),
@@ -162,36 +152,3 @@ print(f"Validation accuracy: {metrics['val_accuracy']:.4f}")
 print(f"Training loss: {metrics['train_loss']:.4f}")
 print(f"Training accuracy: {metrics['train_accuracy']:.4f}")
 print("=================================================================")
-
-if EVALUATE_FINAL_MODEL:
-    test_loss, test_acc = model.evaluate(test_dataset)
-    print(f"\nTEST RESULTS:\nTest accuracy: {test_acc:.4f}\nTest loss: {test_loss:.4f}")
-
-    class_names = train_dataset.class_names
-
-    # Confusion matrix
-    eval.plot_confusion_matrix(
-        model=model,
-        dataset=test_dataset,
-        class_names=class_names,
-        normalize=False,
-        save_path="confusion_matrix.png"
-    )
-
-    # Confusion matrix (normalized)
-
-    eval.plot_confusion_matrix(
-        model=model,
-        dataset=test_dataset,
-        class_names=class_names,
-        normalize=True,
-        save_path="confusion_matrix_normalized.png"
-    )
-
-    # ROC curves (one-vs-rest)
-    eval.plot_roc_curve(
-        model=model,
-        dataset=test_dataset,
-        class_names=class_names,
-        save_path="roc_curves.png"
-    )
