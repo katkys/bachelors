@@ -1,4 +1,6 @@
 import cv2 as cv
+import numpy as np
+from PIL import Image
 
 DETECTOR_OPTIONS = ['opencv', 'dlib', 'mediapipe', 'mtcnn', 'retinaface', 'yolo']
 VALID_EXTS = ('.jpg', '.jpeg', '.png')
@@ -8,7 +10,6 @@ DEVICE = 'cpu'
 
 YOLO_MODEL_PATH = "" #path to pretrained YOLO model weights
 MP_MODEL_PATH = "" #path to pretrained MediaPipe model weights
-# MP_MODEL_SELECTION = 0 #0 -> short-range model, 1 -> full-range model # needed when using mp.solutions, not mp.tasks
 OPENCV_HAAR_CASCADES = "" #path to file 'haarcascade_frontalface_default.xml'
 
 class OpenCVDetector:
@@ -64,15 +65,19 @@ class MediaPipeDetector:
         FaceDetectorOptions = vision.FaceDetectorOptions
         VisionRunningMode = vision.RunningMode
 
-        options = FaceDetectorOptions(
-            base_options=BaseOptions(model_asset_path=MP_MODEL_PATH),
+        detector_options = FaceDetectorOptions(
+            base_options=BaseOptions(model_asset_path=MP_DETECTOR_MODEL_PATH),
             running_mode=VisionRunningMode.IMAGE)
-        self.detector = FaceDetector.create_from_options(options)
-        self.mp = mp  #reference needed in detect method for mp.Image
+        self.detector = FaceDetector.create_from_options(detector_options)
 
-        # # version using mp.solutions:
-        # mp_face = mp.solutions.face_detection
-        # self.detector = mp_face.FaceDetection(model_selection=MP_MODEL_SELECTION,min_detection_confidence=MIN_CONFIDENCE)
+        FaceLandmarker = mp.tasks.vision.FaceLandmarker
+        FaceLandmarkerOptions = mp.tasks.vision.FaceLandmarkerOptions
+        landmarker_options = FaceLandmarkerOptions(
+            base_options=BaseOptions(model_asset_path=MP_LANDMARKER_PATH),
+            running_mode=VisionRunningMode.IMAGE)
+        self.landmarker = FaceLandmarker.create_from_options(landmarker_options)
+
+        self.mp = mp  #reference needed in detect method for mp.Image
 
     def detect(self, img_path):
         mp_image = self.mp.Image.create_from_file(str(img_path))
@@ -91,28 +96,28 @@ class MediaPipeDetector:
                 dets_and_scores.append([x1, y1, x2, y2, score])
 
         return dets_and_scores
-    
-        # # version using mp.solutions:
-        # img = cv.imread(str(img_path))
-        # img_rgb = cv.cvtColor(img, cv.COLOR_BGR2RGB)
-        # result = self.detector.process(img_rgb)
-        # detections = result.detections
 
-        # dets_and_scores = []
-        # if detections:
-        #     h, w, _ = img.shape
-        #     for face in detections:
-        #         box = face.location_data.relative_bounding_box
-        #         x1 = int(box.xmin * w)
-        #         y1 = int(box.ymin * h)
-        #         x2 = int((box.xmin + box.width) * w)
-        #         y2 = int((box.ymin + box.height) * h)
-        #         dets_and_scores.append([x1, y1, x2, y2, float(face.score[0])])
-        # return dets_and_scores
+    def detect_landmarks(self, img_path, normalized=False):
+        img = Image.open(img_path).convert("RGB")
+        w, h = img.size
+        resized = img.resize((256, 256), Image.Resampling.LANCZOS)
+        img_np = np.asarray(resized, dtype=np.uint8)
+        mp_image = self.mp.Image(image_format=self.mp.ImageFormat.SRGB, data=img_np)
+
+        result = self.landmarker.detect(mp_image)
+
+        if not result.face_landmarks:
+            return np.array([])
+        
+        if normalized:
+            return np.array([[lm.x, lm.y] for lm in result.face_landmarks[0]], dtype=np.float32)
+        
+        h, w, _ = img.shape
+        return np.array([[int(lm.x * w), int(lm.y * h)] for lm in result.face_landmarks[0]], dtype=np.int32)
 
     def close(self):
         self.detector.close()
-
+        self.landmarker.close()
 
 class MTCNNDetector:
     def __init__(self):
