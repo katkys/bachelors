@@ -12,15 +12,21 @@ MIN_FACE_CROP_SIZE = 50 ** 2
 def extract_faces(input_dir, output_dir, logger):
     input_dir = Path(input_dir)
     output_dir = Path(output_dir)
+    failed_dir = output_dir / "manual_crops_needed"      
+    failed_dir.mkdir(parents=True, exist_ok=True)        
     detector = fd.create_detector('mediapipe')
 
     success, failure, small = 0, 0, 0
 
     print(f"\nExtracting masked face-crops using MediaPipe Face Landmarker...")
-    print(f"Note: face landmark detection will work best if the input images are FACE CROPS with 25% padding added to the face bounding box. Resizing to 256x256px happens internally, but to preserve ratios input has to be of SQUARE SIZE.\n")
+    print(("NOTE: face landmark detection will work best if the input images are FACE CROPS "
+           "with 25% PADDING added to the face bounding box before cropping. "
+           "Resizing to 256x256px happens internally, but to preserve ratios input has to be of SQUARE SIZE.\n"))
+    
     for root, dirs, files in os.walk(input_dir):
         root_path = Path(root)
         rel_path = root_path.relative_to(input_dir)
+        failed_subdir = failed_dir / rel_path
         out_subdir = output_dir / rel_path
         out_subdir.mkdir(parents=True, exist_ok=True)
 
@@ -32,7 +38,7 @@ def extract_faces(input_dir, output_dir, logger):
             img = cv.imread(str(img_path))
             if img is None:
                 failure += 1
-                logger.error(f"Failed to read image: {img_path}")
+                logger.error(f"Failed to read: {img_path}")
                 continue
 
             
@@ -42,12 +48,16 @@ def extract_faces(input_dir, output_dir, logger):
                 landmarks_np_array = detector.detect_landmarks(str(img_path), normalized=normalize_landmarks)
             except Exception as e:
                 failure += 1
-                logger.error(f"Detector error for image {img_path}: {e}")
+                logger.error(f"Detector error ({e}): {img_path}")
+                failed_subdir.mkdir(parents=True, exist_ok=True)
+                cv.imwrite(str(failed_subdir / img_path.name), img)
                 continue
             
             if len(landmarks_np_array) == 0:
                 failure += 1
-                logger.info(f"No faces detected in image: {img_path}")
+                logger.info(f"No face detected in image: {img_path}")
+                failed_subdir.mkdir(parents=True, exist_ok=True)
+                cv.imwrite(str(failed_subdir / img_path.name), img)
                 continue
             
             h, w, _ = img.shape
