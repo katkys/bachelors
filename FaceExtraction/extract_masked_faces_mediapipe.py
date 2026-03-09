@@ -9,6 +9,10 @@ import face_detection as fd
 CROP_PADDING = 0.05
 MIN_FACE_CROP_SIZE = 50 ** 2
 
+def save_failed_img(img, save_path):
+    save_path.parent.mkdir(parents=True, exist_ok=True)
+    cv.imwrite(str(save_path), img)
+    
 def extract_faces(input_dir, output_dir, logger):
     input_dir = Path(input_dir)
     output_dir = Path(output_dir)
@@ -19,14 +23,11 @@ def extract_faces(input_dir, output_dir, logger):
     success, failure, small = 0, 0, 0
 
     print(f"\nExtracting masked face-crops using MediaPipe Face Landmarker...")
-    print(("NOTE: face landmark detection will work best if the input images are FACE CROPS "
-           "with 25% PADDING added to the face bounding box before cropping. "
+    print(("NOTE: face landmark detection will work best if the input images are FACE CROPS with 25% padding added to the face bounding box. "
            "Resizing to 256x256px happens internally, but to preserve ratios input has to be of SQUARE SIZE.\n"))
-    
     for root, dirs, files in os.walk(input_dir):
         root_path = Path(root)
         rel_path = root_path.relative_to(input_dir)
-        failed_subdir = failed_dir / rel_path
         out_subdir = output_dir / rel_path
         out_subdir.mkdir(parents=True, exist_ok=True)
 
@@ -41,7 +42,7 @@ def extract_faces(input_dir, output_dir, logger):
                 logger.error(f"Failed to read: {img_path}")
                 continue
 
-            
+            fail_save_path = failed_dir / "__".join(rel_path.parts + (img_path.name,))
             landmarks_np_array = None
             normalize_landmarks = True
             try:
@@ -49,16 +50,15 @@ def extract_faces(input_dir, output_dir, logger):
             except Exception as e:
                 failure += 1
                 logger.error(f"Detector error ({e}): {img_path}")
-                failed_subdir.mkdir(parents=True, exist_ok=True)
-                cv.imwrite(str(failed_subdir / img_path.name), img)
+                save_failed_img(img, fail_save_path)
                 continue
             
             if len(landmarks_np_array) == 0:
                 failure += 1
                 logger.info(f"No face detected in image: {img_path}")
-                failed_subdir.mkdir(parents=True, exist_ok=True)
-                cv.imwrite(str(failed_subdir / img_path.name), img)
+                save_failed_img(img, fail_save_path)
                 continue
+            
             
             h, w, _ = img.shape
             if normalize_landmarks:
@@ -67,7 +67,7 @@ def extract_faces(input_dir, output_dir, logger):
             hull= cv.convexHull(landmarks_np_array)
 
             x, y, bw, bh = cv.boundingRect(hull)
-            x1, y1, x2, y2 = fd.add_padding_to_bbox(x, y, x+bw, x+bh, CROP_PADDING)
+            x1, y1, x2, y2 = fd.add_padding_to_bbox(x, y, x+bw, y+bh, CROP_PADDING)
             x1, y1, x2, y2 = fd.clip_bbox(x1, y1, x2, y2, w, h)
 
             mask = np.zeros((h, w), dtype=np.uint8)
@@ -92,9 +92,9 @@ def extract_faces(input_dir, output_dir, logger):
     log_file_path = output_dir / "face_extraction.log"
     print("\nSUMMARY:")
     print(f"Successfully processed {success} images.")
-    print(f"Failed to detect face landmarks in {failure} images.")
+    print(f"Failed to detect face landmarks in {failure} images. Copies of these were saved to '{failed_dir}'.")
     print(f"Discarded {small} images due to insufficient face crop size (<{MIN_FACE_CROP_SIZE}px).")
-    print(f"See log file for details -> ({log_file_path})")
+    print(f"See log file for error details -> ({log_file_path})")
 
 def main():
     parser = ArgumentParser(description="Extract masked face-crops (with black background) from images using MediaPipe Face Landmarker.")
