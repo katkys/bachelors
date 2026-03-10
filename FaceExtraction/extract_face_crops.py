@@ -6,7 +6,11 @@ import logging
 import face_detection as fd
 
 PADDING = 0.05
-MIN_FACE_CROP_SIZE = 50
+MIN_CROP_SIZE = 50
+
+def is_valid_crop(crop):
+    h, w, _ = crop.shape
+    return h >= MIN_CROP_SIZE and w >= MIN_CROP_SIZE and crop.size > 0
 
 def extract_faces(input_dir, output_dir, logger, detector_name):
     input_dir = Path(input_dir)
@@ -17,7 +21,6 @@ def extract_faces(input_dir, output_dir, logger, detector_name):
     detector = fd.create_detector(detector_name)
 
     success, failure = 0, 0
-
     print(f"Extracting faces using {detector_name} face detector...")
     for root, dirs, files in os.walk(input_dir):
         root_path = Path(root)
@@ -56,7 +59,7 @@ def extract_faces(input_dir, output_dir, logger, detector_name):
                 x1, y1, x2, y2 = fd.clip_bbox(x1, y1, x2, y2, w, h)
 
                 face_crop = img[y1:y2, x1:x2]
-                if face_crop.size == 0 or face_crop.shape[0] < MIN_FACE_CROP_SIZE or face_crop.shape[1] < MIN_FACE_CROP_SIZE:
+                if not is_valid_crop(face_crop):
                     continue
 
                 out_fname = f"{img_path.stem}_face{face_idx}.jpg"
