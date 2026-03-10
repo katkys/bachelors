@@ -7,7 +7,7 @@ import numpy as np
 import face_detection as fd
 
 CROP_PADDING = 0.05
-MIN_FACE_CROP_SIZE = 50 ** 2
+MIN_CROP_SIZE = 50 
 
 def save_failed_img(img, save_path):
     save_path.parent.mkdir(parents=True, exist_ok=True)
@@ -16,7 +16,7 @@ def save_failed_img(img, save_path):
 def extract_faces(input_dir, output_dir, logger):
     input_dir = Path(input_dir)
     output_dir = Path(output_dir)
-    failed_dir = output_dir / "manual_crops_needed"      
+    failed_dir = output_dir / "manual_landmarks_needed"      
     failed_dir.mkdir(parents=True, exist_ok=True)        
     detector = fd.create_detector('mediapipe')
 
@@ -59,7 +59,6 @@ def extract_faces(input_dir, output_dir, logger):
                 save_failed_img(img, fail_save_path)
                 continue
             
-            
             h, w, _ = img.shape
             if normalize_landmarks:
                 landmarks_np_array = (landmarks_np_array * np.array([w, h])).astype(np.int32)
@@ -76,7 +75,8 @@ def extract_faces(input_dir, output_dir, logger):
             masked_img = cv.bitwise_and(img, img, mask=mask)
             face_crop = masked_img[y1:y2, x1:x2]
 
-            if face_crop.size < MIN_FACE_CROP_SIZE:
+            h, w, _ = face_crop.shape
+            if h < MIN_CROP_SIZE or w < MIN_CROP_SIZE:
                 small += 1
                 logger.info(f"Detected face was too small in image: {img_path}")
                 continue
