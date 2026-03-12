@@ -9,7 +9,8 @@ MIN_CONFIDENCE = 0.3
 DEVICE = 'cpu'
 
 YOLO_MODEL_PATH = "" #path to pretrained YOLO model weights
-MP_MODEL_PATH = "" #path to pretrained MediaPipe model weights
+MP_DETECTOR_MODEL_PATH = "" #path to pretrained MediaPipe detector weights
+MP_LANDMARKER_PATH = "" #path to file 'face_landmarker.task'
 OPENCV_HAAR_CASCADES = "" #path to file 'haarcascade_frontalface_default.xml'
 
 class OpenCVDetector:
@@ -192,7 +193,7 @@ def create_detector(detector_name):
         return RetinaFaceDetector()
     elif detector_name == "yolo":
         return YOLODetector()
-    elif detector_name == "cv":
+    elif detector_name == "opencv":
         return OpenCVDetector()
 
 # useful methods for handling bboxes:
@@ -207,3 +208,4 @@ def add_padding_to_bbox(x1, y1, x2, y2, pad_ratio=0.05):
     padding_x = int(pad_ratio * (x2 - x1))
     padding_y = int(pad_ratio * (y2 - y1))
     return (x1-padding_x, y1-padding_y, x2+padding_x, y2+padding_y)
+
