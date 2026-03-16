@@ -14,22 +14,26 @@ import evaluation as eval
 
 train_dir = "" #path to directory containing images from training dataset
 val_dir = "" #path to directory containing images from validation dataset
-test_dir = "" #path to directory containing images from test dataset
 
 IMG_SIZE = (299, 299)
-BATCH_SIZE = 20
-INITIAL_EPOCHS = 12
+
+BATCH_SIZE = 16
+INITIAL_EPOCHS = 10
 FINE_TUNE_EPOCHS = 10
 FT_LEARNING_RATE = 1e-5
+EARLY_STOP_PATIENCE = 4
 
-SAVE_MODEL = True
+SAVE_MODEL = False
+MODEL_ID = "M0X_class_weights" #an identificator for the model used for naming the output directory where history files and train/val plot will be saved
+SAVE_DIR_PATH = f"./models_and_histories/{MODEL_ID}"
+os.makedirs(SAVE_DIR_PATH, exist_ok=True)
 
 RANDOM_SEED = 27
 
-BEST_MODEL_SAVE_PATH = "inception_best_model_before_ft.keras"
-BEST_MODEL_FT_SAVE_PATH = "inception_best_model_after_ft.keras"
-HISTORY_SAVE_PATH = "inception_train_history_before_ft.pkl"
-HISTORY_FT_SAVE_PATH = 'inception_train_history_after_ft.pkl'
+BEST_MODEL_SAVE_PATH = f"{SAVE_DIR_PATH}/inception_best_model_before_ft.keras"
+BEST_MODEL_FT_SAVE_PATH = f"{SAVE_DIR_PATH}/inception_best_model_after_ft.keras"
+HISTORY_SAVE_PATH = f"{SAVE_DIR_PATH}/inception_train_history_before_ft.pkl"
+HISTORY_FT_SAVE_PATH = f"{SAVE_DIR_PATH}/inception_train_history_after_ft.pkl"
 
 train_dataset = image_dataset_from_directory(
     train_dir,
@@ -83,7 +87,7 @@ x = data_augmentation(inputs)
 x = preprocess_input(x)
 x = base_model(x, training=False)
 x = GlobalAveragePooling2D()(x)
-x = Dense(1024, activation='relu')(x)
+x = Dense(512, activation='relu')(x)
 x = Dropout(0.4)(x)
 outputs = Dense(classes_count, activation="softmax")(x) 
 model = keras.Model(inputs, outputs)
@@ -92,7 +96,7 @@ model.compile(optimizer=keras.optimizers.Adam(),
               loss=keras.losses.SparseCategoricalCrossentropy(),
                 metrics=['accuracy'])
 
-callbacks=[EarlyStopping(monitor="val_loss",patience=5, restore_best_weights=True)]
+callbacks=[EarlyStopping(monitor="val_loss",patience=EARLY_STOP_PATIENCE, restore_best_weights=True)]
 if SAVE_MODEL:
     callbacks.append(ModelCheckpoint(BEST_MODEL_SAVE_PATH, save_best_only=True, monitor="val_loss"))
 
@@ -120,7 +124,7 @@ model.compile(optimizer=keras.optimizers.Adam(learning_rate=FT_LEARNING_RATE),
               loss=keras.losses.SparseCategoricalCrossentropy(),
               metrics=['accuracy'])
 
-callbacks=[EarlyStopping(monitor="val_loss",patience=5, restore_best_weights=True)]
+callbacks=[EarlyStopping(monitor="val_loss",patience=EARLY_STOP_PATIENCE, restore_best_weights=True)]
 if SAVE_MODEL:
     callbacks.append(ModelCheckpoint(BEST_MODEL_FT_SAVE_PATH, save_best_only=True, monitor="val_loss"))
 
@@ -145,13 +149,21 @@ eval.plot_training_history(
     save_path="training_loss_acc.png"
 )
 
-metrics = eval.get_best_epoch_metrics(combined_history)
 
-print("\n===== MODEL METRICS (model selected based on min val loss) =====")
+val_losses = np.array(combined_history["val_loss"])
+best_epoch_idx = np.argmin(val_losses)
+    
+metrics = {
+        "epoch": int(best_epoch_idx + 1),
+        "val_loss": float(combined_history["val_loss"][best_epoch_idx]),
+        "val_accuracy": float(combined_history["val_accuracy"][best_epoch_idx]),
+        "train_loss": float(combined_history["loss"][best_epoch_idx]),
+        "train_accuracy": float(combined_history["accuracy"][best_epoch_idx])}
+
+print("\n MODEL METRICS (model selected based on min val loss):")
 print(f"Epoch: {metrics['epoch']}")
 print(f"Validation loss: {metrics['val_loss']:.4f}")
 print(f"Validation accuracy: {metrics['val_accuracy']:.4f}")
 print(f"Training loss: {metrics['train_loss']:.4f}")
 print(f"Training accuracy: {metrics['train_accuracy']:.4f}")
-print("================================================================")
 
