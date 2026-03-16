@@ -8,22 +8,24 @@ def plot_training_history(history, save_path=None):
     acc = history.get("accuracy") or history.get("acc")
     val_acc = history.get("val_accuracy") or history.get("val_acc")
 
+    epochs = range(1, len(loss) + 1)
+    epoch_xticks = range(1, len(loss) + 1, 2)
     fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 
-    # Loss
-    axes[0].plot(loss, label="Trénovacia strata")
-    axes[0].plot(val_loss, label="Validačná strata")
+    axes[0].plot(epochs, loss, label="Trénovacia strata")
+    axes[0].plot(epochs, val_loss, label="Validačná strata")
     axes[0].set_title(f"Trénovacia a validačná strata")
     axes[0].set_xlabel("Počet epoch")
     axes[0].set_ylabel("Strata")
+    axes[0].set_xticks(epoch_xticks)
     axes[0].legend()
 
-    # Accuracy
-    axes[1].plot(acc, label="Trénovacia celková presnosť")
-    axes[1].plot(val_acc, label="Validačná celková presnosť")
+    axes[1].plot(epochs, acc, label="Trénovacia celková presnosť")
+    axes[1].plot(epochs, val_acc, label="Validačná celková presnosť")
     axes[1].set_title(f"Trénovacia a validačná celková presnosť")
     axes[1].set_xlabel("Počet epoch")
     axes[1].set_ylabel("Celková presnosť")
+    axes[1].set_xticks(epoch_xticks)
     axes[1].legend()
 
     plt.tight_layout()
@@ -38,8 +40,11 @@ def plot_confusion_matrix(model, dataset, class_names, normalize=False, save_pat
 
     for images, labels in dataset:
         preds = model.predict(images, verbose=0)
-        y_true.extend(labels.numpy())
-        y_pred.extend(np.argmax(preds, axis=1))
+        true_classes = np.argmax(labels.numpy(), axis=1)
+        pred_classes = np.argmax(preds, axis=1)
+
+        y_true.extend(true_classes)
+        y_pred.extend(pred_classes)
 
     cm = confusion_matrix(y_true, y_pred, normalize="true" if normalize else None)
 
@@ -51,7 +56,7 @@ def plot_confusion_matrix(model, dataset, class_names, normalize=False, save_pat
     fig, ax = plt.subplots(figsize=(12, 12))  
     disp.plot(
         ax=ax,
-        xticks_rotation=90,   
+        xticks_rotation=90,  
         colorbar=normalize
     )
 
@@ -66,14 +71,13 @@ def plot_confusion_matrix(model, dataset, class_names, normalize=False, save_pat
     plt.show()
     plt.close(fig)
 
-
 def plot_roc_curve(model, dataset, class_names, save_path=None):
     y_true = []
     y_score = []
 
     for images, labels in dataset:
         preds = model.predict(images, verbose=0)
-        y_true.extend(labels.numpy())
+        y_true.extend(labels.numpy())  
         y_score.extend(preds)
 
     y_true = np.array(y_true)
@@ -84,7 +88,7 @@ def plot_roc_curve(model, dataset, class_names, save_path=None):
     fig, ax = plt.subplots(figsize=(10, 10))
 
     for i in range(n_classes):
-        fpr, tpr, _ = roc_curve(y_true == i, y_score[:, i])
+        fpr, tpr, _ = roc_curve(y_true[:, i], y_score[:, i])
         roc_auc = auc(fpr, tpr)
         ax.plot(fpr, tpr, label=f"{class_names[i]} (AUC = {roc_auc:.2f})")
 
@@ -121,18 +125,36 @@ def compute_per_class_accuracy(model, dataset, class_names):
 
     return results
 
-def get_best_epoch_metrics(history_dict):
+def get_best_epoch_metrics(history_dict, criterium="val_loss"):
     val_losses = np.array(history_dict["val_loss"])
     val_accs = np.array(history_dict["val_accuracy"])
+    val_precisions = np.array(history_dict.get("val_precision"))
+    val_recalls = np.array(history_dict.get("val_recall"))
+    val_f1s = np.array(history_dict.get("val_f1_score"))
+
     train_losses = np.array(history_dict["loss"])
     train_accs = np.array(history_dict["accuracy"])
+    train_precisions = np.array(history_dict.get("precision"))
+    train_recalls = np.array(history_dict.get("recall"))
+    train_f1s = np.array(history_dict.get("f1_score"))
 
-    best_epoch_idx = np.argmin(val_losses) #we choose best epoch based on min validation loss
+    if criterium == "val_accuracy":
+        best_epoch_idx = np.argmax(val_accs)
+    elif criterium == "val_f1_score":
+        best_epoch_idx = np.argmax(val_f1s)
+    else:
+        best_epoch_idx = np.argmin(val_losses)
 
     return {
         "epoch": int(best_epoch_idx + 1),
         "val_loss": float(val_losses[best_epoch_idx]),
         "val_accuracy": float(val_accs[best_epoch_idx]),
+        "val_precision": float(val_precisions[best_epoch_idx]),
+        "val_recall": float(val_recalls[best_epoch_idx]),
+        "val_f1": float(val_f1s[best_epoch_idx]),
         "train_loss": float(train_losses[best_epoch_idx]),
-        "train_accuracy": float(train_accs[best_epoch_idx])
+        "train_accuracy": float(train_accs[best_epoch_idx]),
+        "train_precision": float(train_precisions[best_epoch_idx]),
+        "train_recall": float(train_recalls[best_epoch_idx]),
+        "train_f1": float(train_f1s[best_epoch_idx]),
     }
