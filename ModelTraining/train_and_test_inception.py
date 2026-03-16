@@ -139,12 +139,7 @@ for seed in RANDOM_SEEDS:
     for layer in base_model.layers:
         if isinstance(layer, keras.layers.BatchNormalization):
             layer.trainable = False
-
-    # #unfreeze only top 160 layers of base model
-    # for layer in base_model.layers[-160:]:
-    #     if not isinstance(layer, keras.layers.BatchNormalization):
-    #         layer.trainable = True
-
+            
     #fine-tune 
     model.compile(optimizer=keras.optimizers.Adam(learning_rate=FT_LEARNING_RATE), 
                 loss=keras.losses.CategoricalCrossentropy(label_smoothing=LABEL_SMOOTHING),
@@ -217,9 +212,7 @@ print("\n===== AVERAGE RESULTS ACROSS ALL SEEDS =====")
 avg_results = {}
 for metric in all_test_results[RANDOM_SEEDS[0]].keys(): 
     avg_results[metric] = np.mean([res[metric] for res in all_test_results.values()])
-    
     print(f"{metric}: {avg_results[metric]:.4f}")
-
 print("============================================\n")
 
     
