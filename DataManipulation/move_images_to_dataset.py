@@ -40,7 +40,7 @@ def restore_images(src, dst):
 
 
 def main():
-    parser = ArgumentParser(help="Move images from a folder to their correct place in the dataset directory based on their name (format: 'split__author__fname').")
+    parser = ArgumentParser(description="Move images from a folder to their correct place in the dataset directory based on their name (format: 'split__author__fname').")
     parser.add_argument("--src", required=True, help="Directory with images which are to be moved to the dataset.")
     parser.add_argument("--dst", required=True, help="Main dataset directory.")
     args = parser.parse_args()
