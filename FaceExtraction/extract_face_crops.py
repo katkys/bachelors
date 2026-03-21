@@ -12,15 +12,22 @@ def is_valid_crop(crop):
     h, w, _ = crop.shape
     return h >= MIN_CROP_SIZE and w >= MIN_CROP_SIZE and crop.size > 0
 
+def save_failed_img(img, save_path):
+    save_path.parent.mkdir(parents=True, exist_ok=True)
+    cv.imwrite(str(save_path), img)
+
 def extract_faces(input_dir, output_dir, logger, detector_name):
     input_dir = Path(input_dir)
     output_dir = Path(output_dir)
+    failed_dir = output_dir / "manual_crops_needed"
+    failed_dir.mkdir(parents=True, exist_ok=True)
 
     if detector_name not in fd.DETECTOR_OPTIONS:
         raise ValueError(f"Unsupported detector: {detector_name}")
     detector = fd.create_detector(detector_name)
 
     success, failure = 0, 0
+
     print(f"Extracting faces using {detector_name} face detector...")
     for root, dirs, files in os.walk(input_dir):
         root_path = Path(root)
@@ -39,12 +46,14 @@ def extract_faces(input_dir, output_dir, logger, detector_name):
                 logger.error(f"Failed to read image: {img_path}")
                 continue
 
+            fail_save_path = failed_dir / "__".join(rel_path.parts + (img_path.name,))
             detections = None
             try:
                 detections = detector.detect(img_path)
             except Exception as e:
                 failure += 1
                 logger.error(f"Detector error for image {img_path}: {e}")
+                save_failed_img(img, fail_save_path)
                 continue
             
             face_found = False
@@ -71,7 +80,8 @@ def extract_faces(input_dir, output_dir, logger, detector_name):
 
             if not face_found:
                 failure += 1
-                logger.info(f"No faces detected in image: {img_path}")
+                logger.info(f"No valid face detections in image: {img_path}")
+                save_failed_img(img, fail_save_path)
             else:
                 success += 1
 
@@ -82,7 +92,7 @@ def extract_faces(input_dir, output_dir, logger, detector_name):
     log_file_path = output_dir / "face_extraction.log"
     print("\nSUMMARY:")
     print(f"Successfully processed {success} images.")
-    print(f"Failed to extract faces from {failure} images.")
+    print(f"Failed to extract faces from {failure} images. Copies of these were saved to '{failed_dir}'.")
     print(f"See log file for details -> ({log_file_path})")
 
 def main():
