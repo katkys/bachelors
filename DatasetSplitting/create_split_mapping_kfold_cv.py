@@ -1,3 +1,4 @@
+import os
 from argparse import ArgumentParser
 from pathlib import Path
 import random
@@ -64,8 +65,10 @@ def create_folds(train_val_keys, k):
 def build_csv(groups, test_keys, fold_assignment, k, output_path):
     test_set = set(test_keys)
     header = ["artist", "base", "split"] + [f"fold_{i+1}" for i in range(k)]
+    os.makedirs(output_path, exist_ok=True)
+    output_csv_file_path = Path(output_path) / "split_mapping_5fold_cv.csv"
 
-    with open(output_path, "w", newline="") as f:
+    with open(str(output_csv_file_path), "w", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(header)
 
@@ -92,7 +95,7 @@ def build_csv(groups, test_keys, fold_assignment, k, output_path):
 def main():
     parser = ArgumentParser(description="Create split mapping CSV (training+validation/test split with k folds for cross-validation).")
     parser.add_argument("--src", required=True, help="Main directory where images are organized in artist folders.")
-    parser.add_argument("--dst", required=True, help="Output CSV file path.")
+    parser.add_argument("--dst", required=True, help="Output directory path for the CSV split mapping file.")
     parser.add_argument("-k", type=int, default=5)
 
     args = parser.parse_args()
