@@ -112,18 +112,6 @@ eval.plot_training_history(
     save_path="training_loss_acc.png"
 )
 
-best_epoch_criterium = "val_f1_score" # or val_loss / val_accuracy
+best_epoch_criterium = "val_loss" 
 metrics = eval.get_best_epoch_metrics(history.history, criterium=best_epoch_criterium)
-
-print(f"\nMODEL METRICS (model selected based on {best_epoch_criterium}):")
-print(f"Epoch: {metrics['epoch']}")
-print(f"Validation loss: {metrics['val_loss']:.4f}")
-print(f"Validation accuracy: {metrics['val_accuracy']:.4f}")
-print(f"Validation precision: {metrics['val_precision']:.4f}")
-print(f"Validation recall: {metrics['val_recall']:.4f}")
-print(f"Validation F1-score: {metrics['val_f1']:.4f}")
-print(f"Training loss: {metrics['train_loss']:.4f}")
-print(f"Training accuracy: {metrics['train_accuracy']:.4f}")
-print(f"Training precision: {metrics['train_precision']:.4f}")
-print(f"Training recall: {metrics['train_recall']:.4f}")
-print(f"Training F1-score: {metrics['train_f1']:.4f}")
+eval.print_best_epoch_metrics(metrics, criterium=best_epoch_criterium)

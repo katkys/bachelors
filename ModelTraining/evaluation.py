@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, roc_curve, auc
+from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, roc_curve, auc, classification_report
+
 
 def plot_training_history(history, save_path=None):
     loss = history.get("loss")
@@ -34,9 +35,11 @@ def plot_training_history(history, save_path=None):
         plt.savefig(save_path, dpi=300)
     plt.show()
 
-def plot_confusion_matrix(model, dataset, class_names, normalize=False, save_path=None):
+
+def get_preds_labels_scores(model, dataset):
     y_true = []
     y_pred = []
+    y_score = []
 
     for images, labels in dataset:
         preds = model.predict(images, verbose=0)
@@ -45,23 +48,24 @@ def plot_confusion_matrix(model, dataset, class_names, normalize=False, save_pat
 
         y_true.extend(true_classes)
         y_pred.extend(pred_classes)
+        y_score.extend(preds)
 
+    return np.array(y_pred), np.array(y_true), np.array(y_score)
+
+
+def plot_confusion_matrix(y_true, y_pred, class_names, normalize=False, save_path=None):
     cm = confusion_matrix(y_true, y_pred, normalize="true" if normalize else None)
 
-    disp = ConfusionMatrixDisplay(
-        confusion_matrix=cm,
-        display_labels=class_names
-    )
+    cm_display = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=class_names)
 
     fig, ax = plt.subplots(figsize=(12, 12))  
-    disp.plot(
+    cm_display.plot(
         ax=ax,
         xticks_rotation=90,  
         colorbar=normalize
     )
 
     ax.set_title("Matica zmätku" + (" (normalizovaná)" if normalize else ""))
-
     plt.subplots_adjust(bottom=0.35) 
     plt.tight_layout()
 
@@ -71,24 +75,15 @@ def plot_confusion_matrix(model, dataset, class_names, normalize=False, save_pat
     plt.show()
     plt.close(fig)
 
-def plot_roc_curve(model, dataset, class_names, save_path=None):
-    y_true = []
-    y_score = []
 
-    for images, labels in dataset:
-        preds = model.predict(images, verbose=0)
-        y_true.extend(labels.numpy())  
-        y_score.extend(preds)
-
-    y_true = np.array(y_true)
-    y_score = np.array(y_score)
-
-    n_classes = len(class_names)
+def plot_roc_curve(y_true, y_score, class_names, save_path=None):
+    num_of_classes = len(class_names)
 
     fig, ax = plt.subplots(figsize=(10, 10))
 
-    for i in range(n_classes):
-        fpr, tpr, _ = roc_curve(y_true[:, i], y_score[:, i])
+    for i in range(num_of_classes):
+        y_true_bin = (y_true == i).astype(int) # 1 -> sample belongs to class i, 0 -> sample doesn't belong to class i
+        fpr, tpr, _ = roc_curve(y_true_bin, y_score[:, i])
         roc_auc = auc(fpr, tpr)
         ax.plot(fpr, tpr, label=f"{class_names[i]} (AUC = {roc_auc:.2f})")
 
@@ -106,55 +101,39 @@ def plot_roc_curve(model, dataset, class_names, save_path=None):
         plt.savefig(save_path, dpi=300)
     plt.show()
 
-def compute_per_class_accuracy(model, dataset, class_names):
-    y_true = []
-    y_pred = []
 
-    for images, labels in dataset:
-        preds = model.predict(images, verbose=0)
-        y_true.extend(labels.numpy())
-        y_pred.extend(np.argmax(preds, axis=1))
+def print_classification_report(y_true, y_pred, class_names, save_path=None):
+    report = classification_report(y_true, y_pred, target_names=class_names, digits=4)
+    print(report)
 
-    y_true = np.array(y_true)
-    y_pred = np.array(y_pred)
+    if save_path is not None:
+        with open(save_path, "w") as f:
+            f.write(report)
 
-    results = {}
-    for idx, name in enumerate(class_names):
-        mask = y_true == idx
-        results[name] = np.mean(y_pred[mask] == idx)
-
-    return results
 
 def get_best_epoch_metrics(history_dict, criterium="val_loss"):
-    val_losses = np.array(history_dict["val_loss"])
-    val_accs = np.array(history_dict["val_accuracy"])
-    val_precisions = np.array(history_dict.get("val_precision"))
-    val_recalls = np.array(history_dict.get("val_recall"))
-    val_f1s = np.array(history_dict.get("val_f1_score"))
-
-    train_losses = np.array(history_dict["loss"])
-    train_accs = np.array(history_dict["accuracy"])
-    train_precisions = np.array(history_dict.get("precision"))
-    train_recalls = np.array(history_dict.get("recall"))
-    train_f1s = np.array(history_dict.get("f1_score"))
-
-    if criterium == "val_accuracy":
-        best_epoch_idx = np.argmax(val_accs)
-    elif criterium == "val_f1_score":
-        best_epoch_idx = np.argmax(val_f1s)
+    if criterium not in history_dict:
+        raise ValueError(f"Metric for choosing best epoch ('{criterium}') not found in history keys: {list(history_dict.keys())}")
+    
+    values = np.array(history_dict[criterium])
+    if "loss" in criterium.lower():
+        best_epoch_idx = np.argmin(values)
     else:
-        best_epoch_idx = np.argmin(val_losses)
+        best_epoch_idx = np.argmax(values)
 
-    return {
-        "epoch": int(best_epoch_idx + 1),
-        "val_loss": float(val_losses[best_epoch_idx]),
-        "val_accuracy": float(val_accs[best_epoch_idx]),
-        "val_precision": float(val_precisions[best_epoch_idx]),
-        "val_recall": float(val_recalls[best_epoch_idx]),
-        "val_f1": float(val_f1s[best_epoch_idx]),
-        "train_loss": float(train_losses[best_epoch_idx]),
-        "train_accuracy": float(train_accs[best_epoch_idx]),
-        "train_precision": float(train_precisions[best_epoch_idx]),
-        "train_recall": float(train_recalls[best_epoch_idx]),
-        "train_f1": float(train_f1s[best_epoch_idx]),
-    }
+    best_metrics = {"epoch": int(best_epoch_idx + 1)}
+    
+    for key, metric_values in history_dict.items():
+        metric_values_np_array = np.array(metric_values)
+        best_metrics[key] = float(metric_values_np_array[best_epoch_idx])
+
+    return best_metrics
+
+def print_best_epoch_metrics(metrics_dict, criterium="val_loss"):
+    print(f"\nMODEL METRICS (model selected based on {criterium}):")
+    for key, value in metrics_dict.items():
+        if key == "epoch":
+            print(f"Epoch: {value}")
+        else:
+            print(f"{key.replace('_', ' ').capitalize()}: {value:.4f}")
+    print()

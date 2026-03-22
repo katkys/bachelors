@@ -40,8 +40,8 @@ test_dataset = tf.keras.utils.image_dataset_from_directory(
 )
 
 class_names = test_dataset.class_names
-
 all_test_results = {}
+
 
 for seed in RANDOM_SEEDS:
     SAVE_DIR_PATH = f"./final_models/{MODEL_ID}/{seed}"
@@ -87,6 +87,7 @@ for seed in RANDOM_SEEDS:
         name="data_augmentation"
     )
 
+
     #load the InceptionV3 model pre-trained on ImageNet
     base_model = InceptionV3(
         weights='imagenet',
@@ -106,6 +107,7 @@ for seed in RANDOM_SEEDS:
     x = Dropout(0.4)(x)
     outputs = Dense(classes_count, activation="softmax")(x) 
     model = keras.Model(inputs, outputs)
+
 
     metrics = [
         "accuracy",
@@ -131,6 +133,7 @@ for seed in RANDOM_SEEDS:
         
     with open(HISTORY_SAVE_PATH, 'wb') as file:
         pickle.dump(history.history, file)
+
 
     #unfreeze the base model
     base_model.trainable = True
@@ -159,6 +162,7 @@ for seed in RANDOM_SEEDS:
     with open(HISTORY_FT_SAVE_PATH, 'wb') as file:
             pickle.dump(history_ft.history, file)
 
+
     print("Training complete.")
     # Training curves
     combined_history = {}
@@ -168,6 +172,7 @@ for seed in RANDOM_SEEDS:
         combined_history,
         save_path=f"{SAVE_DIR_PATH}/training_loss_acc.png"
     )
+
 
     print("\nStarting evaluation of best model:")
     model = tf.keras.models.load_model(BEST_MODEL_FT_SAVE_PATH)
@@ -179,11 +184,13 @@ for seed in RANDOM_SEEDS:
         print(f"{name}: {value:.4f}")
     print("========================\n")
 
+    y_pred, y_true, y_score = eval.get_preds_labels_scores(model, test_dataset)
+
     print("Plotting confusion matrices and ROC curves...")
     # Confusion matrix 
     eval.plot_confusion_matrix(
-        model=model,
-        dataset=test_dataset,
+        y_true=y_true,
+        y_pred=y_pred,
         class_names=class_names,
         normalize=False,
         save_path=os.path.join(SAVE_DIR_PATH, "confusion_matrix.png")
@@ -191,8 +198,8 @@ for seed in RANDOM_SEEDS:
 
     # Confusion matrix (normalized)
     eval.plot_confusion_matrix(
-        model=model,
-        dataset=test_dataset,
+        y_true=y_true,
+        y_pred=y_pred,
         class_names=class_names,
         normalize=True,
         save_path=os.path.join(SAVE_DIR_PATH, "confusion_matrix_normalized.png")
@@ -200,8 +207,8 @@ for seed in RANDOM_SEEDS:
 
     # ROC curves (one-vs-rest)
     eval.plot_roc_curve(
-        model=model,
-        dataset=test_dataset,
+        y_true=y_true,
+        y_score=y_score,
         class_names=class_names,
         save_path=os.path.join(SAVE_DIR_PATH, "roc_curves.png")
     )

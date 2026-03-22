@@ -149,21 +149,7 @@ eval.plot_training_history(
     save_path="training_loss_acc.png"
 )
 
-
-val_losses = np.array(combined_history["val_loss"])
-best_epoch_idx = np.argmin(val_losses)
-    
-metrics = {
-        "epoch": int(best_epoch_idx + 1),
-        "val_loss": float(combined_history["val_loss"][best_epoch_idx]),
-        "val_accuracy": float(combined_history["val_accuracy"][best_epoch_idx]),
-        "train_loss": float(combined_history["loss"][best_epoch_idx]),
-        "train_accuracy": float(combined_history["accuracy"][best_epoch_idx])}
-
-print("\n MODEL METRICS (model selected based on min val loss):")
-print(f"Epoch: {metrics['epoch']}")
-print(f"Validation loss: {metrics['val_loss']:.4f}")
-print(f"Validation accuracy: {metrics['val_accuracy']:.4f}")
-print(f"Training loss: {metrics['train_loss']:.4f}")
-print(f"Training accuracy: {metrics['train_accuracy']:.4f}")
+best_epoch_criterium = "val_loss"
+metrics = eval.get_best_epoch_metrics(combined_history, criterium=best_epoch_criterium)
+eval.print_best_epoch_metrics(metrics, criterium=best_epoch_criterium)
 
