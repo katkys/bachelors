@@ -37,7 +37,7 @@ def main():
     all_test_results = {}
     print(f"\nEvaluating experiment: {model_id}")
 
-    for fold in range(1, 2):
+    for fold in range(1, K+1):
         print(f"\nFOLD {fold}:")
         model_path = os.path.join(base_dir, f"best_model_fold{fold}.keras")
 
