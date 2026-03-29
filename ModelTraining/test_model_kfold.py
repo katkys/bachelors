@@ -49,7 +49,7 @@ def main():
         model = tf.keras.models.load_model(model_path)
 
         print("\nEvaluating on test dataset...")
-        results = model.evaluate(test_dataset, verbose=0)
+        results = model.evaluate(test_dataset, verbose=1, return_dict=True)
         all_test_results[fold] = results
 
         y_pred, y_true, y_score = eval.get_preds_labels_scores(model, test_dataset)
