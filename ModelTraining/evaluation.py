@@ -27,6 +27,7 @@ def plot_training_history(history, save_path=None):
     axes[1].set_xlabel("Počet epoch")
     axes[1].set_ylabel("Celková presnosť")
     axes[1].set_xticks(epoch_xticks)
+    axes[1].set_ylim(0, 1)
     axes[1].legend()
 
     plt.tight_layout()
@@ -122,12 +123,16 @@ def get_best_epoch_metrics(history_dict, criterium="val_loss"):
         best_epoch_idx = np.argmax(values)
 
     best_metrics = {"epoch": int(best_epoch_idx + 1)}
-    
     for key, metric_values in history_dict.items():
         metric_values_np_array = np.array(metric_values)
         best_metrics[key] = float(metric_values_np_array[best_epoch_idx])
 
     return best_metrics
+
+
+def extract_val_metrics(metrics):
+    return {k: v for k, v in metrics.items() if k.startswith("val_")}
+
 
 def print_best_epoch_metrics(metrics_dict, criterium="val_loss"):
     print(f"\nMODEL METRICS (model selected based on {criterium}):")
@@ -137,3 +142,23 @@ def print_best_epoch_metrics(metrics_dict, criterium="val_loss"):
         else:
             print(f"{key.replace('_', ' ').capitalize()}: {value:.4f}")
     print()
+
+
+def print_avg_metrics(results):
+    first_key = next(iter(results))
+    for metric in results[first_key].keys():
+        avg_result = np.mean([res[metric] for res in results.values()])
+        print(f"{metric.replace('_', ' ').capitalize()}: {avg_result:.4f}")
+
+
+def print_avg_metrics_summary(all_val_results, all_test_results=None):
+    print("\n===== AVERAGED RESULTS FROM MODELS TRAINED ON DIFFERENT FOLDS =====")
+
+    print("VALIDATION:")
+    print_avg_metrics(all_val_results)
+
+    if all_test_results:
+        print("TEST:")
+        print_avg_metrics(all_test_results)
+
+    print("===================================================================\n")
