@@ -2,7 +2,7 @@ from tensorflow import keras
 
 
 INPUT_SIZES = {'InceptionV3': (299, 299),
-                'Resnet50V2': (224, 224),
+                'ResNet50V2': (224, 224),
                 'EfficientNetV2B0' : (224, 224),
                 'VGG16' : (224, 224),
                 'MobileNetV2' : (224, 224)}

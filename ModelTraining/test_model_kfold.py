@@ -39,7 +39,7 @@ def main():
 
     for fold in range(1, K+1):
         print(f"\nFOLD {fold}:")
-        model_path = os.path.join(base_dir, f"best_model_fold{fold}.keras")
+        model_path = base_dir + f"/best_model_fold{fold}.keras"
 
         if not os.path.exists(model_path):
             print(f"Model not found for fold {fold}, skipping...")
@@ -57,6 +57,9 @@ def main():
         print("\nClassification report:")
         report_path = base_dir + f"/classification_report_fold{fold}.txt"
         eval.print_classification_report(y_true, y_pred, class_names, save_path=report_path)
+
+        mean_auc = eval.get_avg_auc(y_true, y_score, class_names)
+        print(f"Mean AUC: {mean_auc:.2f}")
 
 
         show_plots = input("\nDo you want to see the confusion matrix and ROC curves? (y/n): ").strip().lower()
