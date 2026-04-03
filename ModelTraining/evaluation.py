@@ -34,8 +34,9 @@ def plot_training_history(history, save_path=None):
 
     if save_path is not None:
         plt.savefig(save_path, dpi=300)
-    plt.show()
 
+    plt.show()
+    plt.close(fig)
 
 def get_preds_labels_scores(model, dataset):
     y_true = []
@@ -100,8 +101,9 @@ def plot_roc_curve(y_true, y_score, class_names, save_path=None):
 
     if save_path is not None:
         plt.savefig(save_path, dpi=300)
-    plt.show()
 
+    plt.show()
+    plt.close(fig)
 
 def print_classification_report(y_true, y_pred, class_names, save_path=None):
     report = classification_report(y_true, y_pred, target_names=class_names, digits=4)
@@ -111,6 +113,16 @@ def print_classification_report(y_true, y_pred, class_names, save_path=None):
         with open(save_path, "w") as f:
             f.write(report)
 
+def get_avg_auc(y_true, y_score, class_names):
+    num_of_classes = len(class_names)
+    sum_auc = 0
+    for i in range(num_of_classes):
+        y_true_bin = (y_true == i).astype(int) 
+        fpr, tpr, _ = roc_curve(y_true_bin, y_score[:, i])
+        roc_auc = auc(fpr, tpr)
+        sum_auc += roc_auc
+
+    return sum_auc/num_of_classes
 
 def get_best_epoch_metrics(history_dict, criterium="val_loss"):
     if criterium not in history_dict:
@@ -162,3 +174,4 @@ def print_avg_metrics_summary(all_val_results, all_test_results=None):
         print_avg_metrics(all_test_results)
 
     print("===================================================================\n")
+
