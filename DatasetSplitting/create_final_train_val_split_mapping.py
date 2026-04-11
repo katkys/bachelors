@@ -7,7 +7,7 @@ from collections import defaultdict
 
 
 IMAGE_EXTS = ('.jpg', '.jpeg', '.png')
-VAL_RATIO = 0.15 # for final model training, we reduce the val ratio to 15% (in the 5-fold cv training we used 20%)
+VAL_RATIO = 0.2
 
 #  we want to keep the same test set as in the 5-fold cv,
 #  so we will read the groups from the 5-fold cv csv mapping file,
