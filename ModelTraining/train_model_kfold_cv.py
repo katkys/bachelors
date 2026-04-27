@@ -5,7 +5,7 @@ from argparse import ArgumentParser
 
 import tensorflow as tf
 from tensorflow import keras
-from tensorflow.keras.layers import GlobalAveragePooling2D, Dense, Dropout, RandomFlip, RandomRotation, RandomZoom, RandomTranslation
+from tensorflow.keras.layers import BatchNormalization, GlobalAveragePooling2D, Dense, Dropout, RandomFlip, RandomRotation, RandomZoom, RandomTranslation
 from tensorflow.keras.utils import image_dataset_from_directory, set_random_seed
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras.metrics import F1Score
@@ -17,14 +17,14 @@ import base_models as bm
 
 K = 5
 RANDOM_SEED = 27
-SAVE_MODEL = True
+SAVE_MODEL = False   #we used the 5-fold cv training only for hyperparameter tuning, so models were not saved
 
 def train_chosen_model(model_name, dataset, data_type, id, config):
     img_size = bm.get_input_size(model_name)
     
     model_id = f"{id}_{dataset}_{data_type}_{model_name}" 
-    dataset_dir = f"./Dataset_{dataset}/{img_size[0]}x{img_size[1]}/{data_type}"
-    save_dir_path = f"./Models_{dataset}/{model_id}"
+    dataset_dir = f"./new_split_datasets/{dataset}/{img_size[0]}x{img_size[1]}/{data_type}"
+    save_dir_path = f"./new_split_Tuning_{dataset}/{model_id}"
     if os.path.exists(save_dir_path):
         raise ValueError(f"Experiment with given id '{id}' already exists: {save_dir_path}")
     os.makedirs(save_dir_path)
@@ -94,6 +94,7 @@ def train_chosen_model(model_name, dataset, data_type, id, config):
         x = preprocess_function(x)
         x = base_model(x, training=False)
         x = GlobalAveragePooling2D()(x)
+        # x = BatchNormalization()(x)           #can be added to try to reduce overfitting, but it didn't help in our case 
         x = Dense(config['dense_size'], activation='relu')(x)
         x = Dropout(config['dropout'])(x)
         outputs = Dense(classes_count, activation="softmax")(x) 
@@ -102,7 +103,7 @@ def train_chosen_model(model_name, dataset, data_type, id, config):
         metrics = ["accuracy",
                     F1Score(average="macro", name="f1_score")]
 
-        model.compile(optimizer=keras.optimizers.Adam(),
+        model.compile(optimizer=keras.optimizers.Adam(learning_rate=config['lr']),
                     loss=keras.losses.CategoricalCrossentropy(label_smoothing=config['label_smoothing']),
                         metrics=metrics)
 
@@ -131,14 +132,15 @@ def train_chosen_model(model_name, dataset, data_type, id, config):
         if fine_tuning_depth != "none":
 
             n = len(base_model.layers)
-            if fine_tuning_depth == "half":
-                n //= 2
+            if fine_tuning_depth == "partial":
+                n = bm.get_partial_unfreeze_depth(model_name)
 
             for layer in base_model.layers[-n:]:
                 if not isinstance(layer, keras.layers.BatchNormalization):
                     layer.trainable = True
-                
-            model.compile(optimizer=keras.optimizers.Adam(learning_rate=config['lr']), 
+            
+
+            model.compile(optimizer=keras.optimizers.Adam(learning_rate=config['ft_lr']), 
                         loss=keras.losses.CategoricalCrossentropy(label_smoothing=config['label_smoothing']),
                         metrics=metrics)
             
@@ -147,6 +149,8 @@ def train_chosen_model(model_name, dataset, data_type, id, config):
                                           patience=config['early_stop_patience'],
                                             restore_best_weights=True)]
             if SAVE_MODEL:
+                # best saved model from initial training is only updated during fine-tuning
+                # if the val loss decreases compared to lowest val loss achieved during initial training
                 min_val_loss_before_ft = min(history.history["val_loss"])
                 callbacks_ft.append(ModelCheckpoint(best_model_save_path,
                                      monitor="val_loss",
@@ -187,6 +191,8 @@ def train_chosen_model(model_name, dataset, data_type, id, config):
     
 def main():
     parser = ArgumentParser()
+
+    #DEFAULT SETTINGS => values we used for training final models (Dataset A)
     parser.add_argument("--dataset", type=str, required=True, choices=['A', 'B'], 
                         help="Which dataset you want to use.")
     parser.add_argument("--data_type", type=str, required=True, choices=['original', 'faces', 'faces_gray', 'masked_faces'], 
@@ -194,15 +200,16 @@ def main():
     parser.add_argument("--model", type=str, required=True, choices=bm.get_supported_models(), 
                         help="Base model which will be used with weights pretrained on ImageNet.")
     parser.add_argument("--id", type=str, required=True, help="Experiment ID used for naming the output folder.")
-    parser.add_argument("--epochs", type=int, default=10)
+    parser.add_argument("--epochs", type=int, default=8)
     parser.add_argument("--ft_epochs", type=int, default=10)
     parser.add_argument("--batch", type=int, default=16)
-    parser.add_argument("--lr", type=float, default=1e-5)
+    parser.add_argument("--lr", type=float, default=1e-3)
+    parser.add_argument("--ft_lr", type=float, default=1e-5)
     parser.add_argument("--label_smoothing", type=float, default=0.0)
-    parser.add_argument("--early_stop_patience", type=int, choices=range(2, 6), default=5)
+    parser.add_argument("--early_stop_patience", type=int, choices=range(2, 11), default=3)
     parser.add_argument("--dropout", type=float, default=0.5)
     parser.add_argument("--dense_size", type=int, default=512)
-    parser.add_argument("--ft_depth", type=str, choices=['all', 'half', 'none'], default='all', help="Number of layers of base model to unfreeze for fine-tuning.")
+    parser.add_argument("--ft_depth", type=str, choices=['all', 'partial', 'none'], default='all', help="Number of layers of base model to unfreeze for fine-tuning.")
 
     args = parser.parse_args()
 
@@ -211,6 +218,7 @@ def main():
                 "ft_epochs" : args.ft_epochs,
                 "batch" : args.batch,
                 "lr" : args.lr,
+                "ft_lr" : args.ft_lr,
                 "label_smoothing" : args.label_smoothing,
                 "early_stop_patience" : args.early_stop_patience,
                 "ft_depth" : args.ft_depth,

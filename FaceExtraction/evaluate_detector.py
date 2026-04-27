@@ -6,7 +6,7 @@ import csv
 import json
 import face_detection as fd
 
-TRUE_BBOXES_FILE = "" #path to the ground-truth-bboxes csv file -> see "ground_truth_bboxes_no_ears.csv" for the exact expected format
+TRUE_BBOXES_FILE = "./ground_truth_bboxes.csv" #path to the ground-truth-bboxes csv file
 IMAGES_DIR_PATH = "" #path to directory containing image samples chosen for face-detection testing
 
 def compute_iou(bbox1, bbox2):

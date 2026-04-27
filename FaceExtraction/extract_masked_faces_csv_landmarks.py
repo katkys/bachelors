@@ -7,7 +7,7 @@ import json
 import csv
 import face_detection as fd
 
-PATH_TO_CSV_LANDMARKS = "manual_landmarks_for_failed_images.csv"
+PATH_TO_CSV_LANDMARKS = "./manual_landmarks_for_failed_images.csv"
 
 CROP_PADDING = 0.05
 MIN_CROP_SIZE = 50

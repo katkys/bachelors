@@ -9,7 +9,7 @@ RANDOM_SEED = 27
 
 K = 5
 IMAGE_EXTS = ('.jpg', '.jpeg', '.png')
-TEST_RATIO = 0.2
+TEST_RATIO = 0.15
 
 
 def collect_img_groups(src_dir):
