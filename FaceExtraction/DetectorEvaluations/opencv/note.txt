@@ -1,0 +1,1 @@
+CascadeClassifier from OpenCV DOES NOT provide confidence scores -> so we ran it only once.

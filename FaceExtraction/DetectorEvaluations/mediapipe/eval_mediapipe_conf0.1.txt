@@ -1,0 +1,10 @@
+Detector: mediapipe
+Confidence threshold: 0.1
+Total images processed: 55
+Images with no detections: 1
+Images failed to load: 0
+Images for which detector error occurred: 0
+
+RESULTS:
+Mean IoU detected: 0.6798
+Mean IoU all (failed detections are given IoU=0): 0.6675
