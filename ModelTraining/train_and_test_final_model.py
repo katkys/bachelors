@@ -197,30 +197,6 @@ def train_chosen_model(model_name, dataset, data_type, id, config):
     eval.plot_confusion_matrix(y_pred, y_true, class_names, normalize=True, save_path=cm_norm_path)
     eval.plot_roc_curve(y_true, y_score, class_names, save_path=roc_path)
 
-    show_detailed_predictions = input("\nDo you want to see detailed predictions for each test sample? (y/n): ").strip().lower()
-    if show_detailed_predictions == 'y':
-        file_paths = test_dataset.file_paths
-
-        correct = 0
-        incorrect = 0
-
-        for i, (pred, true) in enumerate(zip(y_pred, y_true)):
-            rel_path = os.path.relpath(file_paths[i], test_dir)
-            
-            pred_label = class_names[pred]
-            correct_pred = "✓" if (pred == true) else "✗"
-
-            print(f"'{rel_path}' was predicted to belong to class {pred_label}: {correct_pred}")
-
-            if pred == true:
-                correct += 1
-            else:
-                incorrect += 1
-
-        print(f"\nCorrect predictions: {correct}")
-        print(f"Incorrect predictions: {incorrect}")
-
-
     print(f"\nAll output files were saved to: {save_dir_path}")
 
     

@@ -1,3 +1,5 @@
+import os
+
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, roc_curve, auc, classification_report
@@ -113,7 +115,7 @@ def print_classification_report(y_true, y_pred, class_names, save_path=None):
         with open(save_path, "w") as f:
             f.write(report)
 
-def get_avg_auc(y_true, y_score, class_names):
+def get_mean_auc(y_true, y_score, class_names):
     num_of_classes = len(class_names)
     sum_auc = 0
     for i in range(num_of_classes):
@@ -175,3 +177,34 @@ def print_avg_metrics_summary(all_val_results, all_test_results=None):
 
     print("===================================================================\n")
 
+def print_prediction_stats(y_true, y_pred, y_score):
+    conf = np.max(y_score, axis=1)
+
+    acc = np.mean(y_true == y_pred)
+    mean_conf = np.mean(conf)
+
+    correct = np.sum(y_true == y_pred)
+    incorrect = len(y_true) - correct
+
+    correct_conf = np.mean(conf[y_true == y_pred]) if correct > 0 else 0
+    incorrect_conf = np.mean(conf[y_true != y_pred]) if incorrect > 0 else 0
+
+    print(f"\nAccuracy: {acc:.4f}")
+    print(f"Mean confidence: {mean_conf:.4f}")
+    print(f"Number of correct predictions: {correct} (mean conf: {correct_conf:.4f})")
+    print(f"Number of incorrect predictions: {incorrect} (mean conf: {incorrect_conf:.4f})\n")
+
+
+def print_predictions(test_dataset, test_dir, y_true, y_pred, y_score):
+    class_names = test_dataset.class_names
+    file_paths = test_dataset.file_paths
+    conf = np.max(y_score, axis=1)
+
+    for i in range(len(y_true)):
+        rel = os.path.relpath(file_paths[i], test_dir)
+
+        predicted = class_names[y_pred[i]]
+        confidence = conf[i]
+        correct_pred = "✓" if y_true[i] == y_pred[i] else "✗"
+
+        print(f"{rel} | pred: {predicted} | conf: {confidence:.4f} | {correct_pred}")
