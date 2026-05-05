@@ -5,7 +5,7 @@ import csv
 from collections import defaultdict
 
 IMAGE_EXTS = ('.jpg', '.jpeg', '.png')
-SPLIT_MAPPING_FILE_PATH = "./split_mapping_5fold_cv_Dataset_A.csv"
+SPLIT_MAPPING_FILE_PATH = "./SplitMappingFilesCSV/split_mapping_5fold_cv_A.csv"
 
 
 def collect_img_groups(src_path): #groups face crops derived from one original image (base image) together
@@ -61,8 +61,8 @@ def build_dataset(groups, test_keys, fold_roles, dst_path, k):
     # fold directories
     for fold in range(k):
         fold_dir = dst_path / f"fold_{fold+1}"
-        train_dir = fold_dir / "training"
-        val_dir = fold_dir / "validation"
+        train_dir = fold_dir / "train"
+        val_dir = fold_dir / "val"
 
         for key, roles in fold_roles.items():
             if key not in groups:

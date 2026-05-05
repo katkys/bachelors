@@ -5,7 +5,7 @@ import csv
 from collections import defaultdict
 
 IMAGE_EXTS = ('.jpg', '.jpeg', '.png')
-FINAL_SPLIT_CSV_PATH = "./final_train_val_split_mapping.csv"  # path to train/val CSV mapping file
+FINAL_SPLIT_CSV_PATH = "./SplitMappingFilesCSV/final_train_val_split_mapping_A.csv"  # path to train/val CSV mapping file
 
 
 def collect_img_groups(src_path):  # groups face crops derived from one original image (base image) together

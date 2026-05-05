@@ -69,7 +69,7 @@ def plot_confusion_matrix(y_true, y_pred, class_names, normalize=False, save_pat
         colorbar=normalize
     )
 
-    ax.set_title("Matica zmätku" + (" (normalizovaná)" if normalize else ""))
+    ax.set_title("Matica zámen" + (" (normalizovaná)" if normalize else ""))
     plt.subplots_adjust(bottom=0.35) 
     plt.tight_layout()
 
