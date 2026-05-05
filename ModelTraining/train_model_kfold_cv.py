@@ -46,8 +46,8 @@ def train_chosen_model(model_name, dataset, data_type, id, config):
         print(f"\nFOLD: {fold}")
 
         fold_dir = dataset_dir + f"/fold_{fold}"
-        train_dir = fold_dir + "/training" 
-        val_dir = fold_dir + "/validation" 
+        train_dir = fold_dir + "/train" 
+        val_dir = fold_dir + "/val" 
 
         history_save_path = f"{save_dir_path}/train_history_before_ft_fold{fold}.pkl"
         history_ft_save_path = f"{save_dir_path}/train_history_after_ft_fold{fold}.pkl"
