@@ -4,7 +4,6 @@ from tensorflow import keras
 INPUT_SIZES = {'InceptionV3': (299, 299),
                 'ResNet50V2': (224, 224),
                 'EfficientNetV2B0' : (224, 224),
-                'VGG16' : (224, 224),
                 'MobileNetV2' : (224, 224)}
 
 def get_input_size(model_name):
@@ -37,12 +36,6 @@ def get_model_and_preprocess_function(model_name):
             weights='imagenet',
             input_shape=input_shape,
             include_top=False), preprocess_input
-    elif model_name == "VGG16":
-        from keras.applications.vgg16 import VGG16, preprocess_input
-        return VGG16(
-            weights='imagenet',
-            input_shape=input_shape,
-            include_top=False), preprocess_input    
     elif model_name == 'MobileNetV2':
         from keras.applications.mobilenet_v2 import MobileNetV2, preprocess_input
         return MobileNetV2(
@@ -51,4 +44,4 @@ def get_model_and_preprocess_function(model_name):
             include_top=False), preprocess_input
     else:
         raise ValueError(f"Model '{model_name}' is not supported.")
-    
+

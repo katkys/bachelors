@@ -18,7 +18,7 @@ else:
     print("\nWarning: No fine-tuning history provided. Best epoch metrics will be based on pre-fine-tuning history only.")
     combined_history = history
 
-best_epoch_criterium = "val_f1_score"
+best_epoch_criterium = "val_loss"
 metrics = eval.get_best_epoch_metrics(combined_history, criterium=best_epoch_criterium)
 eval.print_best_epoch_metrics(metrics, criterium=best_epoch_criterium)
 

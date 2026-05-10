@@ -4,7 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, roc_curve, auc, classification_report
 
-
 def plot_training_history(history, save_path=None):
     loss = history.get("loss")
     val_loss = history.get("val_loss")
@@ -62,15 +61,24 @@ def plot_confusion_matrix(y_true, y_pred, class_names, normalize=False, save_pat
 
     cm_display = ConfusionMatrixDisplay(confusion_matrix=cm, display_labels=class_names)
 
-    fig, ax = plt.subplots(figsize=(12, 12))  
+    fig, ax = plt.subplots(figsize=(15, 15))  
     cm_display.plot(
         ax=ax,
         xticks_rotation=90,  
-        colorbar=normalize
+        colorbar=normalize,
+        cmap="GnBu"
     )
 
-    ax.set_title("Matica zámen" + (" (normalizovaná)" if normalize else ""))
+    ax.set_title("Matica zámen" + (" (normalizovaná)" if normalize else ""), fontsize=18)
     plt.subplots_adjust(bottom=0.35) 
+
+    cm_display.ax_.tick_params(axis='both', labelsize=14)
+    cm_display.ax_.set_xlabel("Predicted label", fontsize=16)
+    cm_display.ax_.set_ylabel("True label", fontsize=16)
+
+    for text in cm_display.text_.ravel():
+        text.set_fontsize(14)
+
     plt.tight_layout()
 
     if save_path is not None:
@@ -208,3 +216,4 @@ def print_predictions(test_dataset, test_dir, y_true, y_pred, y_score):
         correct_pred = "✓" if y_true[i] == y_pred[i] else "✗"
 
         print(f"{rel} | pred: {predicted} | conf: {confidence:.4f} | {correct_pred}")
+

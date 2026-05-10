@@ -3,14 +3,10 @@ from argparse import ArgumentParser
 from pathlib import Path
 from PIL import Image
 
-#inceptionv3 -> (299x299)
-#resnet50 -> (224x224)
-
-TARGET_SIZE = (224, 224)
 PADDING_COLOR = (0, 0, 0)
 VALID_EXTS = ('.jpg', '.png', '.jpeg')
 
-def resize_and_pad_image(src_path, target_size=TARGET_SIZE, color=PADDING_COLOR):
+def resize_and_pad_image(src_path, target_size, color=PADDING_COLOR):
     try:
         with Image.open(src_path) as image:
             image = image.convert("RGB")
@@ -30,7 +26,8 @@ def resize_and_pad_image(src_path, target_size=TARGET_SIZE, color=PADDING_COLOR)
     except Exception as e:
         print(f"Couldn't process image at path '{src_path}' ({e})")
 
-def process_folder(src_root, dst_root):
+def process_folder(src_root, dst_root, target_w, target_h):
+    target_size = (target_w, target_h)
     src_root = Path(src_root)
 
     if not src_root.exists():
@@ -39,7 +36,7 @@ def process_folder(src_root, dst_root):
     
     dst_root = Path(dst_root)
     dst_root.mkdir(parents=True, exist_ok=True)
-    print(f"Resizing images in {str(src_root)} to {TARGET_SIZE[0]}x{TARGET_SIZE[1]}px")
+    print(f"Resizing images from {str(src_root)} to {target_w}x{target_h}px...")
     
     for (root, dirs, files) in os.walk(src_root):
         root_path = Path(root)
@@ -52,17 +49,20 @@ def process_folder(src_root, dst_root):
             dst_path = dst_root / rel_path / filename
             dst_path.parent.mkdir(parents=True, exist_ok=True)
             
-            processed_image = resize_and_pad_image(src_path, TARGET_SIZE, PADDING_COLOR)
+            processed_image = resize_and_pad_image(src_path, target_size, PADDING_COLOR)
             processed_image.save(dst_path, quality=100)
 
-    print("Resizing completed.")
+    print(f"Resizing completed. Images saved to: {str(dst_root)}")
 
 def main():
-    parser = ArgumentParser(description=f"Resize and pad images (target size: {TARGET_SIZE[0]}x{TARGET_SIZE[1]} pixels, padding color: black).")
+    parser = ArgumentParser(description=f"Resize and pad images (padding color: black).")
     parser.add_argument("--src", type=str, required=True, help="Source folder with images organized in artist folders.")
     parser.add_argument("--dst", type=str, required=True, help="Destination folder for processed images.")
+    parser.add_argument("--w", type=int, required=True, help="Target width.")
+    parser.add_argument("--h", type=int, required=True, help="Target height.")
     args = parser.parse_args()
-    process_folder(args.src,args.dst)
+
+    process_folder(args.src,args.dst, args.w, args.h)
 
 if __name__ == "__main__":
     main()

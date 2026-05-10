@@ -123,14 +123,8 @@ def train_chosen_model(model_name, dataset, data_type, id, config):
 
 
     combined_history = {}
-    fine_tuning_depth = config['ft_depth']
-    if fine_tuning_depth != "none":
-
-        n = len(base_model.layers)
-        if fine_tuning_depth == "half":
-            n //= 2
-
-        for layer in base_model.layers[-n:]:
+    if config['ft_epochs'] > 0:
+        for layer in base_model.layers:
             if not isinstance(layer, keras.layers.BatchNormalization):
                 layer.trainable = True
             
@@ -202,8 +196,7 @@ def train_chosen_model(model_name, dataset, data_type, id, config):
     
 def main():
     parser = ArgumentParser()
-
-    #DEFAULT SETTINGS => values we used for training final models (Dataset A)
+    #DEFAULT SETTINGS => values we used for training final models for Dataset A
     parser.add_argument("--dataset", type=str, required=True, choices=['A', 'B'], 
                         help="Which dataset you want to use.")
     parser.add_argument("--data_type", type=str, required=True, choices=['original', 'faces', 'faces_gray', 'masked_faces'], 
@@ -217,10 +210,9 @@ def main():
     parser.add_argument("--lr", type=float, default=1e-3)
     parser.add_argument("--ft_lr", type=float, default=1e-5)
     parser.add_argument("--label_smoothing", type=float, default=0.0)
-    parser.add_argument("--early_stop_patience", type=int, choices=range(2, 6), default=3)
+    parser.add_argument("--early_stop_patience", type=int, default=3)
     parser.add_argument("--dropout", type=float, default=0.5)
     parser.add_argument("--dense_size", type=int, default=512)
-    parser.add_argument("--ft_depth", type=str, choices=['all', 'half', 'none'], default='all', help="Number of layers of base model to unfreeze for fine-tuning.")
 
     args = parser.parse_args()
 
@@ -232,7 +224,6 @@ def main():
                 "ft_lr" : args.ft_lr,
                 "label_smoothing" : args.label_smoothing,
                 "early_stop_patience" : args.early_stop_patience,
-                "ft_depth" : args.ft_depth,
                 "dropout" : args.dropout,
                 "dense_size" : args.dense_size }
     

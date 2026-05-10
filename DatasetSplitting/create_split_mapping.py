@@ -9,7 +9,9 @@ RANDOM_SEED = 27
 
 K = 5
 IMAGE_EXTS = ('.jpg', '.jpeg', '.png')
+
 TEST_RATIO = 0.15
+VAL_RATIO = 0.2
 
 
 def collect_img_groups(src_dir):
@@ -23,32 +25,33 @@ def collect_img_groups(src_dir):
             if file.suffix.lower() not in IMAGE_EXTS:
                 continue
 
-            base = file.stem 
+            base = file.stem
             groups.append((artist_dir.name, base))
 
     return groups
 
 
-def stratified_split(groups, test_ratio):
+def stratified_split(groups, split_ratio):
     artist_to_keys = defaultdict(list)
     for artist, base in groups:
         artist_to_keys[artist].append((artist, base))
 
-    train_val = []
-    test = []
+    split_a = []
+    split_b = []
 
     for artist, keys in artist_to_keys.items():
         random.shuffle(keys)
-        test_count = max(1, int(len(keys) * test_ratio))
+        split_count = max(1, int(len(keys) * split_ratio))
 
-        test.extend(keys[:test_count])
-        train_val.extend(keys[test_count:])
+        split_b.extend(keys[:split_count])
+        split_a.extend(keys[split_count:])
 
-    return train_val, test
+    return split_a, split_b
 
 
 def create_folds(train_val_keys, k):
     artist_to_keys = defaultdict(list)
+
     for key in train_val_keys:
         artist = key[0]
         artist_to_keys[artist].append(key)
@@ -62,7 +65,7 @@ def create_folds(train_val_keys, k):
     return fold_assignment
 
 
-def build_csv(groups, test_keys, fold_assignment, k, output_path):
+def build_cv_csv(groups, test_keys, fold_assignment, k, output_path):
     test_set = set(test_keys)
     header = ["artist", "base", "split"] + [f"fold_{i+1}" for i in range(k)]
     os.makedirs(output_path, exist_ok=True)
@@ -86,16 +89,36 @@ def build_csv(groups, test_keys, fold_assignment, k, output_path):
                         fold_roles.append("val")
                     else:
                         fold_roles.append("train")
-                      
                 row = [artist, base, "train_val"] + fold_roles
 
             writer.writerow(row)
 
 
+def build_final_train_val_csv(groups, val_keys, output_path):
+    val_set = set(val_keys)
+    header = ["artist", "base", "split"]
+    os.makedirs(output_path, exist_ok=True)
+    output_csv_file_path = Path(output_path) / "final_train_val_split_mapping.csv"
+
+    with open(str(output_csv_file_path), "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+
+        for key in groups:
+            artist, base = key
+
+            if key in val_set:
+                row = [artist, base, "val"]
+            else:
+                row = [artist, base, "train"]
+
+            writer.writerow(row)
+
+
 def main():
-    parser = ArgumentParser(description="Create split mapping CSV (training+validation/test split with k folds for cross-validation).")
+    parser = ArgumentParser(description="Create split mapping CSV files (5-fold CV, final train/val).")
     parser.add_argument("--src", required=True, help="Main directory where images are organized in artist folders.")
-    parser.add_argument("--dst", required=True, help="Output directory path for the CSV split mapping file.")
+    parser.add_argument("--dst", required=True, help="Output directory path for generated CSV files.")
     parser.add_argument("-k", type=int, default=5)
 
     args = parser.parse_args()
@@ -111,8 +134,14 @@ def main():
     print(f"Creating {args.k} folds from train+val...")
     fold_assignment = create_folds(train_val, args.k)
 
-    print("Writing CSV...")
-    build_csv(groups, test, fold_assignment, args.k, args.dst)
+    print("Creating stratified train/val split...")
+    train, val = stratified_split(train_val, VAL_RATIO)
+
+    print("Writing 5-fold CV CSV...")
+    build_cv_csv(groups, test, fold_assignment, args.k, args.dst)
+
+    print("Writing final train/val CSV...")
+    build_final_train_val_csv(train_val, val, args.dst)
 
     print("Done.")
 
