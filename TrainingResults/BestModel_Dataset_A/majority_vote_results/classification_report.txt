@@ -1,0 +1,17 @@
+                        precision    recall  f1-score   support
+
+          andor_boruth     0.8571    0.7500    0.8000         8
+  elemir_halasz_hradil     0.6667    0.8571    0.7500         7
+           jan_mudroch     0.8333    1.0000    0.9091         5
+          jozef_hanula     0.5000    0.4000    0.4444         5
+      ladislav_cemicky     1.0000    0.6667    0.8000         6
+  ladislav_mednyanszky     0.7500    0.6667    0.7059         9
+     ludovit_pitthordt     0.6667    0.5714    0.6154         7
+        maria_medvecka     1.0000    0.8333    0.9091         6
+      maximilian_kurth     0.7500    1.0000    0.8571         6
+milan_thomka_mitrovsky     0.8889    0.9412    0.9143        17
+    peter_michal_bohun     0.8750    0.9333    0.9032        15
+
+              accuracy                         0.8132        91
+             macro avg     0.7989    0.7836    0.7826        91
+          weighted avg     0.8170    0.8132    0.8084        91
