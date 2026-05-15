@@ -1,0 +1,8 @@
+                  precision    recall  f1-score   support
+
+anthony_van_dyck     1.0000    1.0000    1.0000         8
+ diego_velazquez     1.0000    1.0000    1.0000         8
+
+        accuracy                         1.0000        16
+       macro avg     1.0000    1.0000    1.0000        16
+    weighted avg     1.0000    1.0000    1.0000        16
