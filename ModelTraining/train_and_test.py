@@ -187,8 +187,8 @@ def train_chosen_model(model_name, dataset, data_type, id, config):
     cm_norm_path = save_dir_path + f"/confusion_matrix_normalized.png"
     roc_path = save_dir_path + f"/roc_curves.png"
 
-    eval.plot_confusion_matrix(y_pred, y_true, class_names, normalize=False, save_path=cm_path)
-    eval.plot_confusion_matrix(y_pred, y_true, class_names, normalize=True, save_path=cm_norm_path)
+    eval.plot_confusion_matrix(y_true, y_pred, class_names, normalize=False, save_path=cm_path)
+    eval.plot_confusion_matrix(y_true, y_pred, class_names, normalize=True, save_path=cm_norm_path)
     eval.plot_roc_curve(y_true, y_score, class_names, save_path=roc_path)
 
     print(f"\nAll output files were saved to: {save_dir_path}")
