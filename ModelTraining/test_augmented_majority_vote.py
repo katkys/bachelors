@@ -53,7 +53,7 @@ def predict_with_majority_voting(model, img_groups, class_names, img_size,prepro
     total_groups = len(img_groups)
     for i, ((true_class_name, base_name), files) in enumerate(img_groups.items(), start=1):
 
-        print(f"Processing image group {i}/{total_groups}:")
+        print(f"Processing image group {i}/{total_groups} ({true_class_name}/{base_name}):")
 
         class_votes = []
         confidences = []
@@ -190,8 +190,8 @@ def main():
     cm_norm_path = save_dir_path + f"/confusion_matrix_normalized.png"
     roc_path = save_dir_path + f"/roc_curves.png"
 
-    eval.plot_confusion_matrix(y_pred, y_true, class_names, normalize=False, save_path=cm_path)
-    eval.plot_confusion_matrix(y_pred, y_true, class_names, normalize=True, save_path=cm_norm_path)
+    eval.plot_confusion_matrix(y_true, y_pred, class_names, normalize=False, save_path=cm_path)
+    eval.plot_confusion_matrix(y_true, y_pred, class_names, normalize=True, save_path=cm_norm_path)
     eval.plot_roc_curve(y_true, y_score, class_names, save_path=roc_path)
 
     print(f"All output files were saved to: {save_dir_path}")
