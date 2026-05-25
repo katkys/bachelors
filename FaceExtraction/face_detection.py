@@ -8,10 +8,10 @@ VALID_EXTS = ('.jpg', '.jpeg', '.png')
 MIN_CONFIDENCE = 0.3
 DEVICE = 'cpu'
 
-YOLO_MODEL_PATH = "" #path to pretrained YOLO model weights
-MP_DETECTOR_MODEL_PATH = "" #path to pretrained MediaPipe detector weights
-MP_LANDMARKER_PATH = "" #path to file 'face_landmarker.task'
-OPENCV_HAAR_CASCADES = "" #path to file 'haarcascade_frontalface_default.xml'
+YOLO_MODEL_PATH = "./PretrainedModelWeights/yolov8l-face.pt"
+MP_DETECTOR_MODEL_PATH = "./PretrainedModelWeights/blaze_face_short_range.tflite" 
+MP_LANDMARKER_PATH = "./PretrainedModelWeights/face_landmarker.task" 
+OPENCV_HAAR_CASCADES = "./PretrainedModelWeights/haarcascade_frontalface_default.xml" 
 
 class OpenCVDetector:
     def __init__(self):

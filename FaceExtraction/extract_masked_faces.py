@@ -100,8 +100,8 @@ def extract_faces(src, dst, logger):
 
 def main():
     parser = ArgumentParser(description="Extract masked face-crops (with black background) from images using MediaPipe Face Landmarker.")
-    parser.add_argument("--src", required=True, help="Path to the input directory containing images organized in artist subdirectories.")
-    parser.add_argument("--dst", required=True, help="Path to the output directory where processed images will be saved.")
+    parser.add_argument("--src", required=True, help="Path to the main source directory.")
+    parser.add_argument("--dst", required=True, help="Path to the destination directory for created masked face crops.")
     args = parser.parse_args()
 
     output_dir = Path(args.dst)

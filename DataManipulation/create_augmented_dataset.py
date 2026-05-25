@@ -95,11 +95,11 @@ def process_folder(src_root, dst_root):
 
 def main():
     parser = ArgumentParser(description=("Create deterministic offline augmented dataset with mirrored folder structure."))
-    parser.add_argument("--src", type=str, required=True, help=("Source folder with images or images organized in artist folders."))
-    parser.add_argument("--dst", type=str, required=True, help=("Destination folder for augmented data."))
+    parser.add_argument("--src", type=str, required=True, help="Path to the main source directory.")
+    parser.add_argument("--dst", type=str, required=True, help="Path to the destination directory.")
     args = parser.parse_args()
 
-    process_folder(args.src, args.dst,)
+    process_folder(args.src, args.dst)
 
 
 if __name__ == "__main__":

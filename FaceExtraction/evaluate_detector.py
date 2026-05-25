@@ -7,7 +7,7 @@ import json
 import face_detection as fd
 
 TRUE_BBOXES_FILE = "./ground_truth_bboxes.csv" #path to the ground-truth-bboxes csv file
-IMAGES_DIR_PATH = "" #path to directory containing image samples chosen for face-detection testing
+IMAGES_DIR_PATH = "../Data/Images_FaceDetectorTest" #path to directory containing image samples chosen for face-detection testing
 
 def compute_iou(bbox1, bbox2):
     #bbox needs to be in format (x1, y1, x2, y2)
@@ -161,8 +161,8 @@ def evaluate_detector(output_dir, detector_name):
     print(f"Per-image IoU results were saved.\n")
 
 def main():
-    parser = ArgumentParser(description="Evaluate face detector based on IoU.")
-    parser.add_argument("--dst", required=True, help="Path to the directory where output files will be saved.")
+    parser = ArgumentParser(description="Evaluate face detector based on IoU and failure rate.")
+    parser.add_argument("--dst", required=True, help="Path to the destination directory for output files.")
     parser.add_argument("--detector", required=True, choices=fd.DETECTOR_OPTIONS, help=f"Face detector to evaluate (options={fd.DETECTOR_OPTIONS})")
     args = parser.parse_args()
 

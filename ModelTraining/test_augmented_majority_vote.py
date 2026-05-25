@@ -130,12 +130,12 @@ def main():
     img_size = bm.get_input_size(args.model)
     model_id = f"{args.id}_{args.dataset}_{args.data_type}_{args.model}"
     
-    experiment_results_path = f"./augmented_Final_{args.dataset}/{model_id}"
+    experiment_results_path = f"./Final_{args.dataset}_augmented/{model_id}"
     save_dir_path = experiment_results_path + "/majority_vote_results"
     os.makedirs(save_dir_path)
     model_path = experiment_results_path + "/best_model.keras"
 
-    dataset_dir = f"./augmented_datasets/{args.dataset}/{img_size[0]}x{img_size[1]}/{args.data_type}"
+    dataset_dir = f"./AugmentedDatasets/{args.dataset}/{img_size[0]}x{img_size[1]}/{args.data_type}"
     test_dir = dataset_dir + "/test_augmented"
 
     if not os.path.exists(model_path):

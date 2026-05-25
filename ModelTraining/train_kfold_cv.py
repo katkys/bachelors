@@ -33,7 +33,7 @@ def train_chosen_model(model_name, dataset, data_type, id, config):
     for k, v in config.items():
         print(f"{k:20}: {v}")
     with open(f"{save_dir_path}/config.json", "w") as config_file:
-        json.dump(config, config_file)
+        json.dump(config, config_file, indent=4)
 
 
     print(f"\nSetting random seed to: {RANDOM_SEED}")
@@ -94,7 +94,7 @@ def train_chosen_model(model_name, dataset, data_type, id, config):
         x = preprocess_function(x)
         x = base_model(x, training=False)
         x = GlobalAveragePooling2D()(x)
-        # x = BatchNormalization()(x)           #can be added to try to reduce overfitting, but it didn't help in our case 
+        # x = BatchNormalization()(x)           #can be added to try to reduce overfitting, we only used it in one experiment
         x = Dense(config['dense_size'], activation='relu')(x)
         x = Dropout(config['dropout'])(x)
         outputs = Dense(classes_count, activation="softmax")(x) 
@@ -187,12 +187,9 @@ def main():
     parser = ArgumentParser()
 
     #DEFAULT SETTINGS => values we used for training final models (Dataset A)
-    parser.add_argument("--dataset", type=str, required=True, choices=['A', 'B'], 
-                        help="Which dataset you want to use.")
-    parser.add_argument("--data_type", type=str, required=True, choices=['original', 'faces', 'faces_gray', 'masked_faces'], 
-                        help="Which version of the images you want to use.")
-    parser.add_argument("--model", type=str, required=True, choices=bm.get_supported_models(), 
-                        help="Base model which will be used with weights pretrained on ImageNet.")
+    parser.add_argument("--dataset", type=str, required=True, choices=['A', 'B'])
+    parser.add_argument("--data_type", type=str, required=True, choices=['original', 'faces', 'faces_gray', 'masked_faces'])
+    parser.add_argument("--model", type=str, required=True, choices=bm.get_supported_models())
     parser.add_argument("--id", type=str, required=True, help="Experiment ID used for naming the output folder.")
     parser.add_argument("--epochs", type=int, default=8)
     parser.add_argument("--ft_epochs", type=int, default=10)

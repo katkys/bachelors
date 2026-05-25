@@ -47,8 +47,8 @@ def process_folder(src_root, dst_root):
 
 def main():
     parser = ArgumentParser(description=f"Pad images to be square, padding color: black).")
-    parser.add_argument("--src", type=str, required=True, help="Source folder with images you wish to process.")
-    parser.add_argument("--dst", type=str, required=True, help="Destination folder where processed images will be saved in a mirrored structure.")
+    parser.add_argument("--src", type=str, required=True, help="Path to main source directory.")
+    parser.add_argument("--dst", type=str, required=True, help="Path to destination directory.")
     args = parser.parse_args()
     process_folder(args.src,args.dst)
 

@@ -56,8 +56,8 @@ def process_folder(src_root, dst_root, target_w, target_h):
 
 def main():
     parser = ArgumentParser(description=f"Resize and pad images (padding color: black).")
-    parser.add_argument("--src", type=str, required=True, help="Source folder with images organized in artist folders.")
-    parser.add_argument("--dst", type=str, required=True, help="Destination folder for processed images.")
+    parser.add_argument("--src", type=str, required=True, help="Path to the main source directory.")
+    parser.add_argument("--dst", type=str, required=True, help="Path to the destination directory.")
     parser.add_argument("--w", type=int, required=True, help="Target width.")
     parser.add_argument("--h", type=int, required=True, help="Target height.")
     args = parser.parse_args()

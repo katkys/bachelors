@@ -44,8 +44,8 @@ def process_folder(src_root, dst_root):
 
 def main():
     parser = ArgumentParser(description="Save grayscale versions of original images in a mirrored folder structure.")
-    parser.add_argument("--src", type=str, required=True, help="Source folder with images organized in artist folders.")
-    parser.add_argument("--dst", type=str, required=True, help="Main destination folder for grayscale images.")
+    parser.add_argument("--src", type=str, required=True, help="Path to the main source directory.")
+    parser.add_argument("--dst", type=str, required=True, help="Path to the destination directory.")
     args = parser.parse_args()
     process_folder(args.src, args.dst)
 

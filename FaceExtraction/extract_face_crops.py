@@ -97,8 +97,8 @@ def extract_faces(input_dir, output_dir, logger, detector_name):
 
 def main():
     parser = ArgumentParser(description="Extract face crops from images using chosen face-detection method.")
-    parser.add_argument("--src", required=True, help="Path to the input directory containing images organized in artist subdirectories.")
-    parser.add_argument("--dst", required=True, help="Path to the output directory where extracted face crops will be saved.")
+    parser.add_argument("--src", required=True, help="Path to the main source directory.")
+    parser.add_argument("--dst", required=True, help="Path to the destination directory for created face crops.")
     parser.add_argument("--detector", required=True, choices=fd.DETECTOR_OPTIONS, help=f"Face detection model to use (options: {fd.DETECTOR_OPTIONS})")
     args = parser.parse_args()
 

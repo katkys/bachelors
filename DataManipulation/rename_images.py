@@ -20,8 +20,9 @@ def rename_images_sequentially(main_dir):
 
 def main():
     parser = ArgumentParser(description="Rename images sequentially inside a directory and its subdirectories.")
-    parser.add_argument("--src", type=str, required=True, help="Path to the main directory which you want to process (can contain images or subdirectories with images).")
+    parser.add_argument("--src", type=str, required=True, help="Path to the main source directory.")
     args = parser.parse_args()
+
     rename_images_sequentially(args.src)
 
 

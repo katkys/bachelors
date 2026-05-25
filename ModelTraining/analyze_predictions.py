@@ -15,7 +15,7 @@ import evaluation as eval
 def load_test_dataset(dataset, data_type, model_name):
     img_size = bm.get_input_size(model_name)
 
-    dataset_dir = f"./new_split_datasets/{dataset}/{img_size[0]}x{img_size[1]}/{data_type}"
+    dataset_dir = f"./Datasets/{dataset}/{img_size[0]}x{img_size[1]}/{data_type}"
     test_dir = dataset_dir + "/test"
 
     test_dataset = image_dataset_from_directory(

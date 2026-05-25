@@ -94,7 +94,7 @@ def extract_faces(src, dst):
 def main():
     parser = ArgumentParser(description="Extract masked face-crops (with black background) from images using landmarks saved in a CSV file.")
     parser.add_argument("--src", required=True, help="Path to the input directory containing images whose landmarks are described in the CSV file.")
-    parser.add_argument("--dst", required=True, help="Path to the output directory where processed images will be saved.")
+    parser.add_argument("--dst", required=True, help="Path to the destination directory for created masked face crops.")
     args = parser.parse_args()
 
     extract_faces(args.src, args.dst)

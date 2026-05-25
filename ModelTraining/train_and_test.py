@@ -19,8 +19,8 @@ def train_chosen_model(model_name, dataset, data_type, id, config):
     img_size = bm.get_input_size(model_name)
     
     model_id = f"{id}_{dataset}_{data_type}_{model_name}" 
-    dataset_dir = f"./new_split_datasets/{dataset}/{img_size[0]}x{img_size[1]}/{data_type}"
-    save_dir_path = f"./new_split_Final_{dataset}/{model_id}"
+    dataset_dir = f"./Datasets/{dataset}/{img_size[0]}x{img_size[1]}/{data_type}"
+    save_dir_path = f"./Final_{dataset}/{model_id}"
     if os.path.exists(save_dir_path):
         raise ValueError(f"Final model with given id '{id}' already exists: {save_dir_path}")
     os.makedirs(save_dir_path)
@@ -29,7 +29,7 @@ def train_chosen_model(model_name, dataset, data_type, id, config):
     for k, v in config.items():
         print(f"{k:20}: {v}")
     with open(f"{save_dir_path}/config.json", "w") as config_file:
-        json.dump(config, config_file)
+        json.dump(config, config_file, indent=4)
 
     train_dir = dataset_dir + "/train" 
     val_dir = dataset_dir + "/val"
@@ -196,13 +196,11 @@ def train_chosen_model(model_name, dataset, data_type, id, config):
     
 def main():
     parser = ArgumentParser()
+    
     #DEFAULT SETTINGS => values we used for training final models for Dataset A
-    parser.add_argument("--dataset", type=str, required=True, choices=['A', 'B'], 
-                        help="Which dataset you want to use.")
-    parser.add_argument("--data_type", type=str, required=True, choices=['original', 'faces', 'faces_gray', 'masked_faces'], 
-                        help="Which version of the images you want to use.")
-    parser.add_argument("--model", type=str, required=True, choices=bm.get_supported_models(), 
-                        help="Base model which will be used with weights pretrained on ImageNet.")
+    parser.add_argument("--dataset", type=str, required=True, choices=['A', 'B'])
+    parser.add_argument("--data_type", type=str, required=True, choices=['original', 'faces', 'faces_gray', 'masked_faces'])
+    parser.add_argument("--model", type=str, required=True, choices=bm.get_supported_models())
     parser.add_argument("--id", type=str, required=True, help="Experiment ID used for naming the output folder.")
     parser.add_argument("--epochs", type=int, default=8)
     parser.add_argument("--ft_epochs", type=int, default=10)

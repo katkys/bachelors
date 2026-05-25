@@ -7,9 +7,9 @@ from collections import defaultdict
 
 RANDOM_SEED = 27
 
-K = 5
 IMAGE_EXTS = ('.jpg', '.jpeg', '.png')
 
+K = 5
 TEST_RATIO = 0.15
 VAL_RATIO = 0.2
 

@@ -117,7 +117,7 @@ def build_final_train_val_dataset(groups, train_keys, val_keys, dst_path):
 def __main__():
     parser = ArgumentParser(description="Apply both 5-fold CV split and final train/val split in one run.")
     parser.add_argument("--src", required=True, help="Path to the original unsplit dataset where images are organized in artist folders.")
-    parser.add_argument("--dst", required=True, help="Destination directory for the dataset.")
+    parser.add_argument("--dst", required=True, help="Path to the destination directory for the dataset.")
     parser.add_argument("--cv_csv", default=SPLIT_MAPPING_FILE_PATH, help="CSV file mapping for the 5-fold CV split.")
     parser.add_argument("--final_csv", default=FINAL_SPLIT_CSV_PATH, help="CSV file mapping for the final train/val split.")
     parser.add_argument("-k", type=int, default=5, help="Number of folds for cross-validation.")

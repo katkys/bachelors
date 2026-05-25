@@ -1,5 +1,4 @@
 import os
-
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.metrics import confusion_matrix, ConfusionMatrixDisplay, roc_curve, auc, classification_report
@@ -66,8 +65,7 @@ def plot_confusion_matrix(y_true, y_pred, class_names, normalize=False, save_pat
         ax=ax,
         xticks_rotation=90,  
         colorbar=normalize,
-        cmap="GnBu"
-    )
+        cmap="GnBu")
 
     ax.set_title("Matica zámen" + (" (normalizovaná)" if normalize else ""), fontsize=18)
     plt.subplots_adjust(bottom=0.35) 
